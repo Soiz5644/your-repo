@@ -97,7 +97,27 @@ int16_t sgp41_execute_conditioning(uint16_t default_rh, uint16_t default_t, uint
 }
 
 int16_t sgp41_measure_raw_signals(uint16_t default_rh, uint16_t default_t, uint16_t *sraw_voc, uint16_t *sraw_nox) {
-    // Add the implementation for the sgp41_measure_raw_signals function here
-    // This function should measure the raw signals for VOC and NOx
-    return 0; // Return 0 if successful, or an error code if not
+    int16_t error;
+    uint8_t buffer[8];
+    uint16_t offset = 0;
+
+    offset = sensirion_i2c_add_command_to_buffer(&buffer[0], offset, 0x261C);
+    offset = sensirion_i2c_add_uint16_t_to_buffer(&buffer[0], offset, default_rh);
+    offset = sensirion_i2c_add_uint16_t_to_buffer(&buffer[0], offset, default_t);
+
+    error = sensirion_i2c_write_data(SGP41_I2C_ADDRESS, &buffer[0], offset);
+    if (error) {
+        return error;
+    }
+
+    sensirion_i2c_hal_sleep_usec(30000);
+
+    error = sensirion_i2c_read_data_inplace(SGP41_I2C_ADDRESS, &buffer[0], 6);
+    if (error) {
+        return error;
+    }
+
+    *sraw_voc = sensirion_common_bytes_to_uint16_t(&buffer[0]);
+    *sraw_nox = sensirion_common_bytes_to_uint16_t(&buffer[3]);
+    return NO_ERROR;
 }
