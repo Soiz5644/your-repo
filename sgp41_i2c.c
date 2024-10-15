@@ -89,3 +89,15 @@ int16_t sgp41_get_serial_number(uint16_t* serial_number, uint8_t serial_number_s
 
     return NO_ERROR;
 }
+
+int16_t sgp41_execute_conditioning(uint16_t default_rh, uint16_t default_t, uint16_t *sraw_voc) {
+    // Add the implementation for the sgp41_execute_conditioning function here
+    // This function should execute the conditioning process for the SGP41 sensor
+    return 0; // Return 0 if successful, or an error code if not
+}
+
+int16_t sgp41_measure_raw_signals(uint16_t default_rh, uint16_t default_t, uint16_t *sraw_voc, uint16_t *sraw_nox) {
+    // Add the implementation for the sgp41_measure_raw_signals function here
+    // This function should measure the raw signals for VOC and NOx
+    return 0; // Return 0 if successful, or an error code if not
+}
