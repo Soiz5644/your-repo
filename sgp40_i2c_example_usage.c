@@ -49,20 +49,12 @@
 
 int main(void) {
     int16_t error = 0;
-	uint8_t channel = 0; // Change this to the desired channel (0-7)
 
     // Parameters for deactivated humidity compensation:
     uint16_t default_rh = 0x8000;
     uint16_t default_t = 0x6666;
 
     sensirion_i2c_hal_init();
-	
-	// Select the I2C channel on the multiplexer
-    error = select_i2c_channel(channel);
-    if (error) {
-        printf("Error selecting I2C channel %u: %i\n", channel, error);
-        return error;
-    }
 
     uint16_t serial_number[3];
     uint8_t serial_number_size = 3;
