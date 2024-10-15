@@ -1,31 +1,34 @@
-common_sources = sensirion_config.h sensirion_common.h sensirion_common.c
-i2c_sources = sensirion_i2c_hal.h sensirion_i2c.h sensirion_i2c.c
-sgp40_sources = sgp40_i2c.h sgp40_i2c.c
-sgp41_sources = sgp41_i2c.h sgp41_i2c.c
+# Makefile for compiling main.cpp
 
-i2c_implementation ?= sensirion_i2c_hal.c
+# Compiler
+CXX = g++
 
-CFLAGS = -Os -Wall -fstrict-aliasing -Wstrict-aliasing=1 -Wsign-conversion -fPIC -I.
+# Compiler flags
+CXXFLAGS = -Wall -Wextra -std=c++11
 
-ifdef CI
-    CFLAGS += -Werror
-endif
+# Target executable
+TARGET = main
 
-.PHONY: all clean
+# Source files
+SRCS = main.cpp
 
-all: sgp40_i2c_example_usage sgp41_i2c_example_usage main
+# Object files
+OBJS = $(SRCS:.cpp=.o)
 
-sgp40_i2c_example_usage: clean
-	$(CC) $(CFLAGS) -o $@  ${sgp40_sources} ${i2c_sources} \
-		${i2c_implementation} ${common_sources} sgp40_i2c_example_usage.c
+# Default target
+all: $(TARGET)
 
-sgp41_i2c_example_usage: clean
-	$(CC) $(CFLAGS) -o $@  ${sgp41_sources} ${i2c_sources} \
-		${i2c_implementation} ${common_sources} sgp41_i2c_example_usage.c
+# Rule to link the executable
+$(TARGET): $(OBJS)
+	$(CXX) $(CXXFLAGS) -o $@ $^
 
-main: clean
-	$(CC) $(CFLAGS) -o $@ main.cpp ${sgp40_sources} ${sgp41_sources} ${i2c_sources} \
-		${i2c_implementation} ${common_sources}
+# Rule to compile source files
+%.o: %.cpp
+	$(CXX) $(CXXFLAGS) -c $< -o $@
 
+# Clean up build files
 clean:
-	$(RM) sgp40_i2c_example_usage sgp41_i2c_example_usage main
+	rm -f $(OBJS) $(TARGET)
+
+# Phony targets
+.PHONY: all clean
