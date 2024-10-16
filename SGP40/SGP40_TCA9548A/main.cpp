@@ -3,6 +3,8 @@
 #include "sgp40_i2c.h"
 #include "sensirion_i2c_hal.h"
 #include <iostream>
+#include <thread>
+#include <chrono>
 
 int main() {
     // Initialize I2C HAL
@@ -28,17 +30,25 @@ int main() {
                   << serial_number[0] << serial_number[1] << serial_number[2] 
                   << std::endl;
     }
+	
+    // Add a delay before the first measurement
+    std::this_thread::sleep_for(std::chrono::seconds(1));	
 
     // Reading data from SGP40
     uint16_t sraw_voc;
     uint16_t default_rh = 0x8000; // Default relative humidity
     uint16_t default_t = 0x6666;  // Default temperature
 
-    error = sgp40_measure_raw_signal(default_rh, default_t, &sraw_voc);
-    if (error) {
-        std::cerr << "Error measuring SGP40 raw signal: " << error << std::endl;
-    } else {
-        std::cout << "SGP40 SRAW VOC: " << sraw_voc << std::endl;
+    while (true) {
+        error = sgp40_measure_raw_signal(default_rh, default_t, &sraw_voc);
+        if (error) {
+            std::cerr << "Error measuring SGP40 raw signal: " << error << std::endl;
+        } else {
+            std::cout << "SGP40 SRAW VOC: " << sraw_voc << std::endl;
+        }
+
+        // Add a delay between measurements
+        std::this_thread::sleep_for(std::chrono::seconds(1));
     }
 
     return 0;
