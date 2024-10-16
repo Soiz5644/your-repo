@@ -1,0 +1,932 @@
+Datasheet SGP40
+Indoor Air Quality Sensor for VOC Measurements
+
+
+- MOx based gas sensor for indoor air quality applications
+- Outstanding long-term stability and lifetime
+- I2C interface with digital output signal
+- Very small 6-pin DFN package: 2.44 x 2.44 x 0.85 mm3
+- Low power consumption: 2.6 mA at 3.3 V
+- Tape and reel packaged, reflow solderable
+
+
+
+
+Product Summary
+The SGP40 is a digital gas sensor designed for easy integration into air purifiers or demand-controlled ventilation systems. Sensirion’s CMOSens® technology offers a complete, easy-to-use sensor system on a single chip featuring a digital I2C interface and a temperature- controlled micro hotplate, providing a humidity- compensated VOC based indoor air quality signal. The output signal can be directly processed by Sensirion’s powerful Gas Index Algorithm to translate the raw signal into a VOC Index as a robust measure for indoor air quality. The Gas Index Algorithm automatically adapts to the environment the sensor is exposed to. Both sensing
+
+
+element and Gas Index Algorithm feature an unmatched robustness against contaminating gases present in real-world applications enabling a unique long-term stability as well as low drift and device-to-device variation. The very small 2.44 x 2.44 x 0.85 mm3 DFN package enables applications in limited spaces. Sensirion’s state-of-the-art production process guarantees high reproducibility and reliability. Tape and reel packaging together with suitability for standard SMD assembly processes make the SGP40 predestined for high-volume applications.
+
+
+
+
+
+Figure 1 Functional block diagram of the SGP40.
+
+Table of Contents
+1 Sensor Performance	3
+2 Specifications	5
+2.1 Electrical Specifications	5
+2.2 Timing Specifications	5
+2.3 Recommended Operating and Storage Conditions	5
+2.4 Absolute Minimum and Maximum Ratings	6
+2.5 Hardware Interface Specifications	7
+2.6 Environmental Stability	8
+2.7 Material Contents	8
+3 Sensor Output Signal Description	9
+3.1 Raw Signal Measurement	9
+3.2 VOC Index Measurement	9
+3.3 Built-in Self-Test	10
+3.4 Reading out The Sensor Serial Number	10
+3.5 Sensor Start-up Behavior	10
+4 Digital Interface Description	11
+4.1 General Considerations	11
+4.2 I2C Address	11
+4.3 I2C Voltage Levels	11
+4.4 I2C Protocol Speed	11
+4.5 I2C Sequences	11
+4.6 Checksum Calculation	12
+4.7 I2C Commands	12
+5 Mechanical Specifications	15
+5.1 Traceability	15
+5.2 Package Outline	15
+5.3 Land Pattern	16
+5.4 Soldering Instructions	16
+6 Ordering Information	17
+6.1 Packaging Information	17
+
+
+1 Sensor Performance
+Table 1 lists specifications characterizing the gas sensing performance. The SGP40 chip provides a digital raw signal (SRAW_VOC) which is sensitive to most VOC gases typically present in indoor environments and which is proportional to the logarithm of the resistance of the sensing material. This signal is intended for further processing by Sensirion’s robust Gas Index Algorithm, which is available on GitHub (see SGP40 product page on Sensirion’s webpage), to provide a VOC bases output signal that can be directly used for indoor air quality applications. For the specifications given below, ethanol in clean air has been used as proxy gas for typical indoor air events.
+
+
+Parameter
+Comments
+Values1
+Units
+
+
+Min.
+Typ.
+Max.
+
+Output signals2
+VOC Index, processed value from SRAW_VOC
+1
+–
+500
+VOC Index points
+
+SRAW_VOC, digital raw value
+0
+–
+65’535
+ticks3
+Measurement range
+Ethanol in clean air
+0
+–
+1’000
+ppm
+Specified range
+Ethanol in clear air
+0.3
+–
+30
+ppm
+Device-to-device variation
+VOC Index4
+–
+<±15
+
+<±15
+–
+VOC Index points or
+% m.v. (the larger)
+Repeatability
+VOC Index4
+–
+<±5
+
+<±5
+–
+VOC Index points or
+% m.v. (the larger)
+Limit of detection5,6
+Ethanol in specified range
+–
+–
+<0.05
+
+<10
+ppm or
+% of concentration setpoint (the larger)
+Response time
+Changing concentration
+from 5 to 10 ppm of ethanol at sampling interval of 1 s
+?63
+–
+<10
+–
+s
+
+
+?90
+–
+<30
+–
+s
+Switch-on behavior
+Time until reliably detecting VOC events7
+–
+<60
+–
+s
+
+Time until specifications in this table are met
+–
+<1
+–
+h
+Sensitivity6
+SRAW_VOC,
+doubling VOC concentration
+Ethanol in specified range
+–
+?870
+–
+ticks
+
+
+5 to 10 ppm of ethanol
+?710
+?870
+?1’030
+ticks
+Sampling interval
+VOC Index
+–
+1
+–
+s
+
+SRAW_VOC
+0.5
+1
+10
+s
+Table 1 Gas sensing specifications at 25 °C and 50 % RH in zero air (considered as clean air for indoor air quality applications) and a power supply of VDD of 3.3 V. All concentrations refer to ethanol as test gas.
+
+
+
+
+
+
+
+
+
+1 99 % of the sensors will be within the minimum–maximum tolerance. Typical tolerance refers to the mean of the distribution for ?100 sensors.
+2 Humidity compensated when actual humidity value is provided as input to the sensor (see section 3.1 Raw Signal Measurement).
+3 Signal in ticks is proportional to the logarithm of the resistance of the sensing layer.
+4 Evaluated using the calibration and test sequence according to the application note SGP40 – Testing Guide.
+5 Limit of detection is defined as the minimum change of concentration required to obtain a raw signal change 3 times higher than the noise at the given concentration setpoint. 6 Parameter tested over simulated lifetime of 10 years in an indoor environment. Test conditions: continuous operation in 250 ppm of Decamethylcyclopentasiloxane (D5) for 200 h.
+7 Signal change during 60-s event of 5 to 10 ppm of ethanol is three times larger than signal drift without this event during the same duration.
+
+Figure 2 displays the typical response of the raw signal of SGP40 to various VOCs as a function of their concentrations in otherwise clean air.
+
+Figure 2 Typical sensor response to various VOCs normalized to 500 ppb of ethanol. ISO 2-gas mix according to ISO16000-29 is composed of n-octane and m-xylene in a molar ratio of 53:47. Data were recorded at 25 °C and 50 % RH and a power supply of VDD of
+3.3 V.
+
+2 Specifications
+2.1 Electrical Specifications
+Table 2 lists electrical specifications of the SGP40. Default conditions of 25 °C and 3.3 V supply voltage apply to values in the table below, unless otherwise stated. The SGP40 supports both I2C “standard-mode” and “fast-mode”.
+
+
+Parameter
+Symbol
+Values
+Unit
+Comments
+
+
+Min.
+Typ.
+Max.
+
+
+Supply voltage, hotplate supply voltage8
+VDD, VDDH
+1.7
+3.3
+3.6
+V
+Minimal voltage must be guaranteed also for the maximum supply current specified in this table. VDD and VDDH must be connected to the same power supply, see Figure 5.
+Idle current
+IDD
+–
+34
+105
+?A
+The idle mode is activated after power-up, after calling the sgp4x_turn_heater_off command, or after a soft reset.
+Supply current under operation9
+
+–
+3.5
+4.0
+mA
+Average current consumption while the sensor is continuously operated at VDD, VDDH = 1.8 V.
+
+
+–
+2.6
+3.0
+mA
+Average current consumption while the sensor is continuously operated at VDD, VDDH = 3.3 V.
+Communication
+–
+Digital 2-wire interface, I2C
+Table 2 Electrical specifications.
+
+
+2.2 Timing Specifications
+Timings in Table 3 refer to the power up and reset of the ASIC part and do not reflect the usefulness of the readings.
+
+Parameter
+Symbol
+Condition
+Min.
+Typ.
+Max.
+Unit
+Power-up time
+tPU
+After hard reset, VDD ? VPOR
+–
+0.4
+0.6
+ms
+Soft reset time
+tSR
+After soft reset
+–
+0.4
+0.6
+ms
+SCL clock frequency
+fSCL
+–
+–
+–
+400
+kHz
+Table 3 System timing specifications.
+
+
+2.3 Recommended Operating and Storage Conditions
+Gas Sensing Specifications as detailed in Table 1 are guaranteed only when the sensor is stored and operated under the recommended conditions as specified in Table 4 and displayed in Figure 3 and Figure 4. Prolonged exposure to conditions outside these conditions may reduce sensor performance. The sensor must not be exposed towards condensing conditions (i.e.,
+>90 % relative humidity) at any time.
+
+
+
+
+
+
+
+
+8 Any supply voltage as defined by the min./max. range may be used for continuous operation of the sensor. The typical value specifies the supply voltage at which outgoing quality control is performed.
+9 Sending the sgp40_measure_raw_signal command enables continuous operation of the sensor. A 20 % higher current is drawn during 5 ms on VDDH after entering the measurement mode.
+
+
+Condition
+Parameter
+Min.
+Max.
+Unit
+Operating conditions
+Relative humidity
+0
+90
+% RH
+
+Temperature
+?10
+50
+°C
+Operating conditions of humidity compensation
+Humidity
+1.5 (?13)
+30 (+31)
+g m?3 (°C dew point) or
+
+
+–
+90
+% RH
+
+
+
+(the smaller)
+
+
+Temperature
+?10
+50
+°C
+Storage conditions
+Relative humidity
+0
+80
+% RH
+
+Temperature
+5
+30
+°C
+Table 4 Recommended humidity and temperature conditions for storing and operating the SGP40. Dew point refers to maximum humidity allowed at minimum and maximum temperature, respectively.
+
+
+
+Figure 3 Recommended relative humidity and temperature for operating the SGP40. Green area marks conditions for which humidity compensation has been optimized. Additionally, gray areas mark operating conditions without considering the humidity compensation feature.
+
+Figure 4 Recommended relative humidity and temperature for storing the SGP40.
+
+
+To ensure an optimal performance of the SGP40, Handling and Assembly Instructions for SGPxx Gas Sensors as well as the
+Design-in Guide for Integrating SGP4x Gas Sensors need to be followed.
+
+2.4 Absolute Minimum and Maximum Ratings
+Stress levels beyond those listed in Table 5 may cause permanent damage to the device. Exposure to minimum/maximum rating conditions for extended periods may affect sensor performance and reliability of the device.
+
+
+Parameter
+Rating
+Supply voltage VDD
+?0.3 to +3.6 V
+Supply voltage VDDH
+?0.3 to +3.6 V
+Short-term storage temperature range10
+?40 to +70 °C
+Operating temperature range
+?20 to +55 °C
+Short-term storage humidity range10
+0 to 80 % (non-condensing)
+Operating humidity range
+0 to 90 % (non-condensing)
+ESD HBM
+2 kV
+ESD CDM
+500 V
+Latch up, JESD78 Class II, 125 °C
+100 mA
+Table 5 Absolute minimum and maximum ratings.
+
+
+2.5 Hardware Interface Specifications
+The SGP40 comes in a 6-pin DFN package, see Table 6. Figure 5 shows a typical application circuit. The VDD pin must be decoupled with an RC element. The required decoupling for VDDH depends on the power supply network connected to the sensor, a capacitor of 1 ?F is recommended. VDD and VDDH must be connected to one single supply VDD. The external pull- up resistors (e.g., Rp = 10 k?) are required to pull the SDA and SCL signal lines high. For dimensioning resistor sizes please take bus capacity and communication frequency into account (see section 7.1 of NXP I2C-bus specification and user manual for more details). It should be noted that pull-up resistors may be included in I/O circuits of microcontrollers. The die pad or center pad is electrically connected to GND. Hence, electrical considerations do not impose constraints on the wiring of the die pad. However, for mechanical stability it is recommended to solder the die pad to the PCB.
+
+Pin
+Name
+Comments
+
+
+1
+VDD
+Supply voltage
+
+2
+VSS
+Ground
+
+3
+SDA
+Serial data, bidirectional
+
+4
+n/a
+Connect to ground (no electrical function)
+
+5
+VDDH
+Supply voltage, hotplate
+
+6
+SCL
+Serial clock, bidirectional
+
+Table 6 Pin assignment (transparent top view). Dashed lines are only visible from the bottom.
+
+
+
+
+
+
+
+
+
+
+
+
+
+10 Short-term storage refers to temporary conditions during, e.g., transport.
+
+
+
+
+Figure 5 Typical application circuit.
+
+2.6 Environmental Stability
+The SGP40 has been qualified based on the JEDEC JESD47 qualification test method. The Moisture Sensitivity Level classification of the SGP40 is MSL1, according to IPC/JEDEC J-STD-020. At the same time, it is recommended to further process the sensors within 1 year after date of delivery. The SGP40 should not be exposed to bright illumination by either sunlight or artificial light sources during operation.
+
+2.7 Material Contents
+The device is fully RoHS, REACH, Halogen-free, and WEEE compliant, e.g., free of Pb, Cd, and Hg.
+
+3 Sensor Output Signal Description
+3.1 Raw Signal Measurement
+Calling the sgp40_measure_raw_signal command launches/continues the VOC measurement mode. It starts one measurement of the raw signal (SRAW_VOC) which is returned after 30 ms. Raw signal value in ticks is provided as one 16-bit word followed by one CRC byte (Figure 6). The raw signal in ticks is proportional to the logarithm of the sensor resistance. This signal is used as input for Sensirion’s Gas Index Algorithm to provide a processed VOC Index (see section 3.2 VOC Index Measurement). In case the Gas Index Algorithm is not used, discard the first measured value. Typically, a measurement is performed every second by calling the sgp40_measure_raw_signal command again every second without turning the heater off. To exit the VOC measurement mode, the master calls the sgp4x_turn_heater_off command which switches off the hotplate and puts the sensor in idle mode.
+
+
+Figure 6 Process flow for performing a raw signal measurement with the SGP40. For enabling on-chip humidity compensation, current relative humidity and temperature values have to be supplied as part of the measurement command.
+The SGP40 features an automatic on-chip humidity compensation of the raw signal. The feature remains disabled as long as default values for both humidity and temperature are sent together with the sgp40_measure_raw_signal command. For enabling the compensation, the measurement command includes two words (+ respective CRC bytes) where the first word represents the relative humidity and the second one represents the temperature.
+
+3.2 VOC Index Measurement
+
+
+Figure 7 Schematic of the driver and Gas Index Algorithm implementation on a microcontroller.
+For best performance in indoor-air-quality use cases, Sensirion recommends processing the (humidity-compensated) raw signal SRAW_VOC through Sensirion’s powerful Gas Index Algorithm. This algorithm (Figure 7) automatically adapts its output to any indoor environment and maps all VOC events to a VOC Index scale ranging from 1 to 500 VOC Index points (Figure 8). The value 100 refers to the average indoor gas composition over the past 24 h. While values between 100 and 500 indicate a deterioration, values between 1 and 100 inform about improvement of the air quality. The Gas Index Algorithm is available on GitHub (see SGP40 product page on Sensirion’s webpage). The SGP40 raw signal needs to be provided to the Gas Index Algorithm at a sampling rate of 1 s.
+
+
+
+Figure 8 Explanation of the VOC Index scale.
+
+3.3 Built-in Self-Test
+With the sgp40_execute_self_test command, users can perform an on-chip self-test for, e.g., in-line or end-of-line production testing. If this command is called when the sensor is in idle mode, the sensor returns to idle mode after the test (Figure 9). In case this command is called during VOC measurement mode (i.e., after calling the sgp40_measure_raw_signal command), the hotplate remains switched on thereafter. After 320 ms, the master can read a fixed data pattern (1 word + CRC byte) to check if the test was successful or not.
+
+
+Figure 9 Possible ways of integrating the built-in self-test function.
+
+3.4 Reading out The Sensor Serial Number
+Every SGP40 sensor carries a unique serial number for identification purposes which is hard coded during sensor production. This number can be read out by using the sgp4x_get_serial_number command at any time in idle mode (Figure 10). After 1 ms, the chip responds with 3 words (each word followed by one CRC byte) which together constitute the serial number.
+
+
+Figure 10 Process flow for reading out the serial number of the SGP40 sensor.
+
+3.5 Sensor Start-up Behavior
+The sensor starts powering-up after reaching the power-up threshold voltage of 1.7 V and enters idle mode after max. 0.6 ms. In this state, the sensor is ready to receive commands from the master.
+
+4 Digital Interface Description
+4.1 General Considerations
+For detailed information about the I2C protocol itself and its detailed implementation, please, consult the document NXP I2C-bus specification and user manual. All SGP40 commands consist of two bytes (16 bits). The commands must not be followed by a CRC. Additionally, data sent to and returned from the sensor is transferred in packets of two bytes (16 bits) followed by a 1-byte (8 bit) CRC.
+
+4.2 I2C Address
+The sensor’s I2C address is 89 (decimal; hex.: 0x59). The I2C header is formed by the I2C address followed by a read or write bit.
+
+4.3 I2C Voltage Levels
+Input and output voltage levels are specified in section 6.1 of NXP I2C-bus specification and user manual. The sensor’s interface
+is compatible with 1.7–3.6 V I2C bus voltage levels depending on the supply voltage level.
+
+4.4 I2C Protocol Speed
+The sensor supports I2C “standard-mode” and “fast-mode”, with a maximum clock frequency of 100 or 400 kHz, respectively.
+
+4.5 I2C Sequences
+The typical communication sequence between the I2C master (e.g., a microcontroller in a host device) and the sensor is described as follows and visualized in Figure 11:
+1. The sensor is powered up.
+2. The I2C master periodically calls the measurement command and reads data in the following sequence:
+a. I2C master sends a measurement command.
+b. I2C master waits until the measurement is finished either by waiting for the maximum execution time or by waiting for the expected duration and then poll data until the read header is acknowledged by the sensor (expected durations are listed in Table 8).
+c. I2C master reads out the measurement result.
+
+
+Figure 11 Possible I2C command sequences for communicating with the SGP40. Dark areas indicate that the sensor controls the SDA (data) line. First, the I2C master sends the write header writing a 16-bit command, potentially followed by two words of data with CRC bytes. For reading the measured data (from the built-in self-test and from the sensor measurement), the I2C master sends the read header and receives
+one word of data with CRC byte. In case of reading out the serial number of the sensor, the master receives three words with CRC bytes.
+With the acknowledgement of the measurement command, the SGP40 starts measuring. When the measurement is in progress, no communication with the sensor is possible and the sensor aborts the communication with a NACK condition. After the sensor has completed the measurement, the master can read the measurement results by sending an I2C read header. The sensor will acknowledge the reception of the read header and responds with data. The response data length is listed in Table 8 and is structured in data words, where one word consists of two bytes of data (most significant bit first) followed by a one-byte CRC
+
+checksum. Each byte must be acknowledged by the master with an ACK condition for the sensor to continue sending data. If the sensor does not receive an ACK from the master after any byte of data, it will not continue sending data.
+After receiving the checksum for the last word of data, a NACK and STOP condition have to be sent (see Figure 11). The I2C master can abort the read transfer with a NACK followed by a STOP condition after any data byte if it is not interested in subsequent data, e.g., the CRC byte or following data bytes, in order to save time. Note that the data cannot be read more than once, and access to data beyond the specified amount will return a pattern of high bits.
+
+4.6 Checksum Calculation
+The 8-bit CRC checksum transmitted after each data word is generated by the CRC algorithm according to the properties as stated in Table 7. The CRC covers the contents of the two previously transmitted data bytes.
+
+Property
+Value
+Example code
+Name
+CRC-8
+uint8_t CalcCrc(uint8_t data[2]) { uint8_t crc = 0xFF;
+for(int i = 0; i < 2; i++) { crc ^= data[i];
+for(uint8_t bit = 8; bit > 0; --bit) { if(crc & 0x80) {
+crc = (crc << 1) ^ 0x31u;
+} else {
+crc = (crc << 1);
+}
+}
+}
+return crc;
+}
+Width
+8 bit
+
+Protected Data
+read and/or write data
+
+Polynomial
+0x31 (x8 + x5 + x4 + 1)
+
+Initialization
+0xFF
+
+Reflect input
+False
+
+Reflect output
+False
+
+Final XOR
+0x00
+
+Examples
+CRC (0xBE 0xEF) = 0x92
+
+Table 7 Checksums are used for the 2-byte data packets only. The command codes themselves already contain a 3-bit CRC and therefore, a checksum must not be appended.
+
+
+4.7 I2C Commands
+The available measurement commands of the SGP40 are listed in Table 8.
+
+Command
+Command hex. code
+Parameter length including CRC [bytes]
+Response length including CRC [bytes]
+Measurement duration [ms]
+
+
+
+
+Typ.
+Max.
+sgp40_measure_raw_signal
+0x26 0x0F
+6
+3
+25
+30
+sgp40_execute_self_test
+0x28 0x0E
+–
+3
+300
+320
+sgp4x_turn_heater_off
+0x36 0x15
+–
+–
+0.1
+1
+sgp4x_get_serial_number
+0x36 0x82
+–
+9
+0.1
+1
+Table 8 I2C commands available for SGP40.
+
+Measure Raw Signal
+
+Command
+Subcommand
+Command hex. code
+Description
+sgp40_measure_raw_signal
+Without humidity compensation
+0x26 0x0F 0x80 0x00 0xA2
+0x66 0x66 0x93
+This command starts/continues the VOC measurement mode, leaves humidity compensation disabled by sending the default values (see Table 10), and returns the measured raw signal SRAW_VOC as 2 bytes (+ 1 CRC byte).
+
+With humidity compensation
+0x26 0x0F 0xXX 0xXX 0xXX
+0xYY 0xYY 0xYY
+In order to enable the humidity compensation, the master has to specify the relative humidity 0xXX 0xXX 0xXX and temperature 0xYY 0xYY 0xYY input (incl. corresponding CRC bytes) in the format as given in Table 10.
+Table 9 Description of the I2C measurement command.
+
+
+
+
+
+Relative Humidity
+Temperature
+
+Value / %
+Hex. code
+Value / °C
+Hex. code
+Conversion into ticks
+RH/ticks=RH/%× 65'535
+100
+T/ticks=(T/°C + 45)× 65'535
+175
+Default
+50
+0x80 0x00 + CRC 0xA2
+25
+0x66 0x66 + CRC 0x93
+Minimum
+0
+0x00 0x00 + CRC 0x81
+?45
+0x00 0x00 + CRC 0x81
+Maximum
+100
+0xFF 0xFF + CRC 0xAC
+130
+0xFF 0xFF + CRC 0xAC
+Table 10 Conversion of relative humidity in % and temperature in °C into ticks as the input parameters of the measurement command. Note: minimum and maximum values do not reflect the range of conditions for which the humidity compensation feature has been optimized. For details see Table 4.
+
+
+
+
+Byte number
+Description
+Value
+0, 1
+two bytes
+u16 unsigned integer directly provides the raw signal SRAW_VOC in ticks which is proportional to the logarithm of the resistance of the sensing element.
+2
+CRC byte for bytes 0, 1
+–
+Table 11 Returned values by the I2C measurement command.
+
+
+Built-in Self-Test
+
+Command
+Command hex. code
+Description
+sgp40_execute_self_test
+0x28 0x0E
+This command triggers the built-in self-test checking for integrity of both hotplate and MOX material and returns the result of this test as 2 bytes (+ 1 CRC byte).
+Table 12 Description of the I2C built-in self-test command.
+
+
+Byte number
+Description
+Value
+0, 1
+two bytes
+0xD4 0xXX: all tests passed successfully (ignore 0xXX byte) 0x4B 0xXX: one or more tests have failed (ignore 0xXX byte)
+2
+CRC byte for bytes 0, 1
+–
+Table 13 Returned values by the I2C built-in self-test command.
+
+
+Turn Heater off and Return to Idle Mode
+
+Command
+Command hex. code
+Description
+sgp4x_turn_heater_off
+0x36 0x15
+This command turns the hotplate off and stops the measurement. Subsequently, the sensor enters idle mode.
+Table 14 Description of the I2C heater off command.
+
+
+Read out The Sensor Serial Number
+
+Command
+Command hex. code
+Description
+sgp4x_get_serial_number
+0x36 0x82
+This command provides the decimal serial number of the SGP40 chip by returning 3x2 bytes (+ 1 CRC byte).
+Table 15 Description of the I2C get serial number command.
+
+
+
+Byte number
+Description
+Value
+0, 1
+two bytes
+First (i.e., most significant) and second byte of the serial number.
+2
+CRC byte for bytes 0, 1
+–
+3, 4
+two bytes
+Third and fourth byte of the serial number.
+5
+CRC byte for bytes 3, 4
+–
+6, 7
+two bytes
+Fifth and sixth (i.e., least significant) byte of the serial number.
+8
+CRC byte for bytes 6, 7
+–
+Table 16 Returned values by the I2C get serial number command.
+
+
+Soft Reset
+
+Command
+Command hex. code
+Description
+soft_reset
+0x00 0x06
+This command is a general call resetting all devices connected to the same I2C bus. The first byte refers to the general call address and the second byte refers to the reset command. After calling this command, the SGP40 will restart entering the idle mode.
+Table 17 Description of the I2C general soft reset command.
+
+5 Mechanical Specifications
+SGP40 sensors are provided in a DFN (dual flat no leads) package with an outline of 2.44 × 2.44× 0.85 mm3 and a terminal pitch of 0.8 mm. The sensor opening with a typical diameter of 0.8 mm is offset to the bottom right corner on the top side of the package. The sensor chip is assembled on a Ni/Pd/Au plated copper lead frame. Sensor chip and lead frame are over-molded by a black, epoxy-based mold compound. Please note that the side walls of the package are diced and therefore the lead frame sidewall surfaces are not plated.
+
+5.1 Traceability
+All SGP40 sensors are laser marked for easy identification and traceability (Figure 12). The marking on the sensor top side consists of a pin-1 indicator and three lines of text. The top line consists of the pin-1 indicator which is located in the top left corner and the product name. The two lines at the bottom consist of 2 alphanumeric digits each. That code can be decoded by Sensirion only and allows for tracking on batch level through production, calibration, and testing – and will be provided upon justified request.
+If viewed from below pin 1 is indicated by triangular shaped cut in the otherwise rectangular die pad. The dimensions of the triangular cut are shown in Figure 13, right. The sensor opening on the top side is not recommended for optical alignment.
+
+
+Figure 12 Top view of the SGP40 illustrating the laser marking.
+
+5.2 Package Outline
+
+
+
+Figure 13 Package outline drawing of the SGP40. Dimensions are given in millimeters.
+5.3 Land Pattern
+Recommended land pattern of the SGP40 is shown in Figure 14. Pads on PCB are recommended to be non-solder mask defined (NSMD). Recommended solder paste stencil thickness is 125–150 ?m.
+
+
+Figure 14 Recommended land pattern.
+5.4 Soldering Instructions
+Standard reflow soldering ovens and “no clean” type 3 solder paste (as specified in IPC J-STD-005A) should be used for soldering the SGP40. The sensors are designed to withstand a soldering profile according to IPC/JEDEC J-STD-020. Peak temperatures of TP = 245 °C during up to tp = 30 s for Pb-free assembly in IR/Convection reflow ovens (see Figure 15) are recommended. In addition, we also recommend a maximum ramp-down rate of <4 °C s?1. Vapor phase or manual soldering should not be used in order to avoid damaging of the sensor. In case the PCB hosting the SGP40 chip passes through multiple solder cycles, it is recommended to assemble the SGP40 during the last solder cycle. Board wash and ultrasonic cleaning should be avoided. For general information (such as conformal coating), please also refer to the Handling and Assembly Instructions for SGPxx Gas Sensors.
+
+
+
+Figure 15 Soldering profile according to JEDEC standard. Recommended
+conditions are TP = 245°C and tP ? 30 s for Pb-free assembly, TL < 220°C and tL < 150 s. Ramp-up rate <3°C s?1 and ramp-down rate <4°C s?1.
+6 Ordering Information
+Use the part names and product numbers shown in the following table when ordering the SGP40 gas sensor. For the latest product information and local distributors, visit www.sensirion.com.
+
+Part Name
+Description
+Ordering size
+Product Number
+SGP40-D-R4
+SGP40 sensor components as tape on reel
+2’500 pcs
+3.000.384
+SEK-SVM4x Evaluation Kit
+1 SVM41 PCB equipped with SGP41, an SHT40, and an MCU; 1 USB cable; 1 jumper wire cable; direct humidity compensated VOC and NOx Index output via UART or I2C interface
+www.sensirion.com/my-sgp-ek
+1 pc
+3.000.630
+Table 18 SGP40 ordering options.
+
+
+6.1 Packaging Information
+
+
+Figure 16 Technical drawing of the packaging tape with sensor orientation in tape. Header tape is to the right and trailer tape to the left on this drawing. Dimensions are given in millimeters.
+Important Notices
+Warning, Personal Injury
+Do not use this product as safety or emergency stop devices or in any other application where failure of the product could result in personal injury. Do not use this product for applications other than its intended and authorized use. Before installing, handling, using or servicing this product, please consult the data sheet and application notes. Failure to comply with these instructions could result in death or serious injury.
+
+If the Buyer shall purchase or use SENSIRION products for any unintended or unauthorized application, Buyer shall defend, indemnify and hold harmless SENSIRION and its officers, employees, subsidiaries, affiliates and distributors against all claims, costs, damages and expenses, and reasonable attorney fees arising out of, directly or indirectly, any claim of personal injury or death associated with such unintended or unauthorized use, even if SENSIRION shall be allegedly negligent with respect to the design or the manufacture of the product.
+
+ESD Precautions
+The inherent design of this component causes it to be sensitive to electrostatic discharge (ESD). To prevent ESD-induced damage and/or degradation, take customary and statutory ESD precautions when handling this product. See application note “ESD, Latchup and EMC” for more information.
+
+Warranty
+SENSIRION warrants solely to the original purchaser of this product for a period of 12 months (one year) from the date of delivery that this product shall be of the quality, material and workmanship defined in SENSIRION’s published specifications of the product. Within such period, if proven to be defective, SENSIRION shall repair and/or replace this product, in SENSIRION’s discretion, free of charge to the Buyer, provided that:
+* notice in writing describing the defects shall be given to SENSIRION within fourteen (14) days after their appearance;
+* such defects shall be found, to SENSIRION’s reasonable satisfaction, to have arisen from SENSIRION’s faulty design, material, or workmanship;
+* the defective product shall be returned to SENSIRION’s factory at the Buyer’s expense; and
+* the warranty period for any repaired or replaced product shall be limited to the unexpired portion of the original period.
+This warranty does not apply to any equipment which has not been installed and used within the specifications recommended by SENSIRION for the intended and proper use of the equipment. EXCEPT FOR THE WARRANTIES EXPRESSLY SET FORTH HEREIN, SENSIRION MAKES NO WARRANTIES, EITHER EXPRESS OR IMPLIED, WITH RESPECT TO THE PRODUCT. ANY AND ALL WARRANTIES, INCLUDING WITHOUT LIMITATION, WARRANTIES OF MERCHANTABILITY OR FITNESS FOR A PARTICULAR PURPOSE, ARE EXPRESSLY EXCLUDED AND DECLINED.
+SENSIRION is only liable for defects of this product arising under the conditions of operation provided for in the data sheet and proper use of the goods. SENSIRION explicitly disclaims all warranties, express or implied, for any period during which the goods are operated or stored not in accordance with the technical specifications.
+SENSIRION does not assume any liability arising out of any application or use of any product or circuit and specifically disclaims any and all liability, including without limitation consequential or incidental damages. All operating parameters, including without limitation recommended parameters, must be validated for each customer’s applications by customer’s technical experts. Recommended parameters can and do vary in different applications.
+SENSIRION reserves the right, without further notice, (i) to change the product specifications and/or the information in this document and (ii) to improve reliability, functions and design of this product.
+
+Copyright© 2022, by SENSIRION. CMOSens® is a trademark of Sensirion All rights reserved
+
+Revision History
+
+Date
+Version
+Page(s)
+Changes
+July 2020
+1.0
+All
+Initial release
+September 2021
+1.1
+Multiple 3
+4
+
+8
+
+9
+
+9
+
+9, 12, 13
+
+9, 12, 14
+
+10, 12, 13
+
+10, 12, 14
+
+
+11
+
+13
+
+
+14
+Typo and formatting corrections Updated footnote 1
+Updated caption of Figure 2
+
+Updated Figure 5
+
+Updated description in section 3.1 Raw Signal Measurement Updated Figure 8
+Renamed measure command in Figure 6, Table 8, and Table 9 Renamed turn heater off command in Figure 6, Table 8, and Table 14 Renamed self-test command in Figure 9, Table 8, and Table 12
+Added command sgp4x_get_serial_number and added section 3.4 Reading out The Sensor Serial Number, Table 8, Table 15, and Table 16
+
+Updated Figure 11
+
+Updated description of measurement command with humidity compensation in
+Table 9
+
+Updated returned values of self-test command in Table 13
+February 2022
+1.2
+All 9
+17
+Editorial changes Updated Figure 7
+Updated Table 18
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Headquarters and Subsidiaries
+
+Sensirion AG Laubisruetistr. 50 CH-8712 Staefa ZH Switzerland
+
+phone:  +41 44 306 40 00
+fax:	+41 44 306 40 30
+info@sensirion.com www.sensirion.com
+Sensirion Inc., USA
+phone: +1 312 690 5858
+info-us@sensirion.com www.sensirion.com
+Sensirion Korea Co. Ltd. phone: +82 31 337 7700~3 info-kr@sensirion.com www.sensirion.com/kr
+
+Sensirion Japan Co. Ltd.
+phone: +81 3 3444 4940
+info-jp@sensirion.com www.sensirion.com/jp
+Sensirion China Co. Ltd.
+phone: +86 755 8252 1501
+info-cn@sensirion.com www.sensirion.com/cn
+Sensirion Taiwan Co. Ltd
+phone: +886 3 5506701
+info@sensirion.com www.sensirion.com
+
+To find your local representative, please visit http://www.sensirion.com/distributors
+
+
+
+
