@@ -1,3 +1,5 @@
+Source : https://github.com/Sensirion/raspberry-pi-i2c-sgp41
+
 # Sensirion Raspberry Pi I2C SGP41 Driver
 
 This document explains how to set up the SGP41 sensor to run on a Raspberry Pi
