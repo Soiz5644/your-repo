@@ -4,6 +4,7 @@
 #include "sgp41_i2c.h"
 #include "sht3x_i2c.h"
 #include "sensirion_i2c_hal.h"
+#include "sensirion_gas_index_algorithm.h"
 #include <iostream>
 #include <thread>
 #include <chrono>
@@ -71,6 +72,11 @@ int main() {
               << sgp41_serial_number[0] << sgp41_serial_number[1] << sgp41_serial_number[2]
               << std::endl;
 
+    // Initialize Gas Index Algorithm for VOC
+    GasIndexAlgorithmParams sgp40_voc_params, sgp41_voc_params;
+    GasIndexAlgorithm_init(&sgp40_voc_params, GasIndexAlgorithm_ALGORITHM_TYPE_VOC);
+    GasIndexAlgorithm_init(&sgp41_voc_params, GasIndexAlgorithm_ALGORITHM_TYPE_VOC);
+
     // Execute conditioning for 10 seconds for SGP41
     uint16_t sraw_voc, sraw_nox;
     uint16_t default_rh = 0x8000; // Default relative humidity
@@ -122,31 +128,35 @@ int main() {
             std::cerr << "Error reading SGP30 measurements" << std::endl;
         }
 
-        // Measure from SGP40
-        tca9548a.set_channel(0);
-        if (sgp40_measure_raw_signal(default_rh, default_t, &sgp40_sraw_voc) != 0) {
-            std::cerr << "Error measuring SGP40 raw signal" << std::endl;
-        }
+		// Measure from SGP40
+		tca9548a.set_channel(0);
+		if (sgp40_measure_raw_signal(default_rh, default_t, &sgp40_sraw_voc) != 0) {
+			std::cerr << "Error measuring SGP40 raw signal" << std::endl;
+		}
+		int32_t sgp40_voc_index;
+		GasIndexAlgorithm_process(&sgp40_voc_params, sgp40_sraw_voc, &sgp40_voc_index);
 
-        // Measure from SGP41
-        tca9548a.set_channel(1);
-        if (sgp41_measure_raw_signals(default_rh, default_t, &sraw_voc, &sraw_nox) != 0) {
-            std::cerr << "Error measuring SGP41 raw signals" << std::endl;
-        }
+		// Measure from SGP41
+		tca9548a.set_channel(1);
+		if (sgp41_measure_raw_signals(default_rh, default_t, &sraw_voc, &sraw_nox) != 0) {
+			std::cerr << "Error measuring SGP41 raw signals" << std::endl;
+		}
+		int32_t sgp41_voc_index;
+		GasIndexAlgorithm_process(&sgp41_voc_params, sraw_voc, &sgp41_voc_index);
 
         // Measure from SHT35
         tca9548a.set_channel(3);
         if (sht3x_measure_single_shot(REPEATABILITY_MEDIUM, false, &temperature, &humidity) != NO_ERROR) {
             std::cerr << "Error measuring SHT35" << std::endl;
         }
-
-        // Write data to CSV file
-        data_file << timestamp << ","
-                  << tvoc_ppb << "," << co2_eq_ppm << ","
-                  << sgp40_sraw_voc << ","
-                  << sraw_voc << "," << sraw_nox << ","
-                  << temperature << "," << humidity
-                  << std::endl;
+				  
+	    // Write data to CSV file
+		data_file << timestamp << ","
+				  << tvoc_ppb << "," << co2_eq_ppm << ","
+				  << sgp40_sraw_voc << "," << sraw_voc << "," << sraw_nox << ","
+				  << sgp40_voc_index << "," << sgp41_voc_index << ","
+				  << temperature << "," << humidity
+				  << std::endl;		  
 
         // Add a delay between measurements
         std::this_thread::sleep_for(std::chrono::seconds(1));
