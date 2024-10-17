@@ -1,10 +1,11 @@
-// Include necessary headers
 #include "rpi_tca9548a.h"
 #include "sht3x_i2c.h"
 #include "sensirion_i2c_hal.h"
 #include <iostream>
 #include <thread>
 #include <chrono>
+
+#define NO_ERROR 0  // Define NO_ERROR as 0
 
 int main() {
     // Initialize I2C HAL
