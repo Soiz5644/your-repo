@@ -9,6 +9,7 @@
 #include <chrono>
 #include <fstream>
 #include <ctime>
+#include <sys/stat.h>
 
 #define NO_ERROR 0  // Define NO_ERROR as 0
 
@@ -18,6 +19,11 @@ std::string get_current_time() {
     char buffer[100];
     std::strftime(buffer, sizeof(buffer), "%d/%m/%y - %H:%M:%S", std::localtime(&now_time));
     return std::string(buffer);
+}
+
+bool file_exists(const std::string& filename) {
+    struct stat buffer;
+    return (stat(filename.c_str(), &buffer) == 0);
 }
 
 int main() {
@@ -91,9 +97,15 @@ int main() {
     }
     std::cout << "SHT35 status register: " << status_register << std::endl;
 
-    // Open CSV file for writing
-    std::ofstream data_file("sensor_data.csv");
-    data_file << "Timestamp,SGP30_tVOC_ppb,SGP30_CO2eq_ppm,SGP40_SRAW_VOC,SGP41_SRAW_VOC,SGP41_SRAW_NOX,Temperature_C,Humidity_%" << std::endl;
+    // Open CSV file for appending data
+    std::ofstream data_file;
+    bool file_exists_flag = file_exists("sensor_data.csv");
+    data_file.open("sensor_data.csv", std::ios::out | std::ios::app);
+    
+    // Write header if file is created new
+    if (!file_exists_flag) {
+        data_file << "Timestamp,SGP30_tVOC_ppb,SGP30_CO2eq_ppm,SGP40_SRAW_VOC,SGP41_SRAW_VOC,SGP41_SRAW_NOX,Temperature_C,Humidity_%" << std::endl;
+    }
 
     // Measure temperature and humidity from SHT35, and raw signals from SGP30, SGP40, and SGP41 in an infinite loop
     float temperature = 0.0;
