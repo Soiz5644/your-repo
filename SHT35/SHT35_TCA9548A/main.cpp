@@ -43,10 +43,10 @@ int main() {
     }
     std::cout << "SHT35 status register: " << status_register << std::endl;
 
-    // Measure temperature and humidity in a loop
+    // Measure temperature and humidity in an infinite loop
     float temperature = 0.0;
     float humidity = 0.0;
-    for (int i = 0; i < 10; ++i) {
+    while (true) {
         std::cout << "Measuring temperature and humidity..." << std::endl;
         error = sht3x_measure_single_shot(REPEATABILITY_MEDIUM, false, &temperature, &humidity);
         if (error != NO_ERROR) {
