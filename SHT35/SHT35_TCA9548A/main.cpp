@@ -22,10 +22,7 @@ int main() {
 
     // Select channel 3 for SHT35
     std::cout << "Selecting channel 3 on TCA9548A..." << std::endl;
-    if (tca9548a.set_channel(3) != 0) {
-        std::cerr << "Failed to select channel 3 on TCA9548A" << std::endl;
-        return -1;
-    }
+    tca9548a.set_channel(3);
 
     // Initialize SHT35 sensor with I2C address 0x45
     std::cout << "Initializing SHT35 sensor at address 0x45..." << std::endl;
