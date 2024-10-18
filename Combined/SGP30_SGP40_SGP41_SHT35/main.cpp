@@ -110,7 +110,7 @@ int main() {
     
     // Write header if file is created new
     if (!file_exists_flag) {
-        data_file << "Timestamp,SGP30_tVOC_ppb,SGP30_CO2eq_ppm,SGP40_SRAW_VOC,SGP41_SRAW_VOC,SGP41_SRAW_NOX,Temperature_C,Humidity_%" << std::endl;
+        data_file << "Timestamp,SGP30_tVOC_ppb,SGP30_CO2eq_ppm,SGP40_SRAW_VOC,SGP41_SRAW_VOC,SGP41_SRAW_NOX,sgp40_voc_index,sgp41_voc_index,Temperature_C,Humidity_%" << std::endl;
     }
 
     // Measure temperature and humidity from SHT35, and raw signals from SGP30, SGP40, and SGP41 in an infinite loop
