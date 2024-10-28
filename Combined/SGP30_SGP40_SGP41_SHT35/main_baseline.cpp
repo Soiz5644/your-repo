@@ -11,7 +11,6 @@
 #include <fstream>
 #include <ctime>
 #include <sys/stat.h>
-#include <mariadb/mysql.h>  // Include MySQL library
 
 #define NO_ERROR 0  // Define NO_ERROR as 0
 
@@ -61,32 +60,6 @@ void set_first_power_up_flag() {
         file.close();
     } else {
         std::cerr << "Unable to open file to set first power-up flag" << std::endl;
-    }
-}
-
-void finish_with_error(MYSQL *con) {
-    std::cerr << mysql_error(con) << std::endl;
-    mysql_close(con);
-    exit(1);
-}
-
-void insert_sensor_data(MYSQL *con, int sensor_id, double temperature, double humidity, int humidity_available) {
-    char query[256];
-
-    if (humidity_available) {
-        snprintf(query, sizeof(query),
-                 "INSERT INTO sensor_readings(sensor_id, temperature, humidity, reading_date) "
-                 "VALUES(%d, %.2lf, %.2lf, NOW())",
-                 sensor_id, temperature, humidity);
-    } else {
-        snprintf(query, sizeof(query),
-                 "INSERT INTO sensor_readings(sensor_id, temperature, reading_date) "
-                 "VALUES(%d, %.2lf, NOW())",
-                 sensor_id, temperature);
-    }
-
-    if (mysql_query(con, query)) {
-        finish_with_error(con);
     }
 }
 
@@ -166,16 +139,6 @@ int main() {
     }
     std::cout << "SHT35 status register: " << status_register << std::endl;
 
-    // Connect to MySQL database
-    MYSQL *con = mysql_init(NULL);
-    if (con == NULL) {
-        std::cerr << "mysql_init() failed" << std::endl;
-        return -1;
-    }
-    if (mysql_real_connect(con, "15.188.64.253", "vm", "Admin123%", "sensor_data", 0, NULL, 0) == NULL) {
-        finish_with_error(con);
-    }
-
     // Open CSV file for appending data
     std::ofstream data_file;
     bool file_exists_flag = file_exists("sensor_data.csv");
@@ -183,13 +146,15 @@ int main() {
     
     // Write header if file is created new
     if (!file_exists_flag) {
-        data_file << "Timestamp,SGP30_tVOC_ppb,SGP30_CO2eq_ppm,SGP40_SRAW_VOC,SGP41_SRAW_VOC,SGP41_SRAW_NOX,sgp40_voc_index,sgp41_voc_index,Temperature_C,Humidity_%" << std::endl;
+        data_file << "Timestamp,SGP30_tVOC_ppb,SGP30_CO2eq_ppm,SGP30_tVOC_sraw,SGP30_eCO2_sraw,"
+                  << "SGP40_SRAW_VOC,SGP41_SRAW_VOC,SGP41_SRAW_NOX,sgp40_voc_index,"
+                  << "sgp41_voc_index,Temperature_C,Humidity_%" << std::endl;
     }
 
     // Measure temperature and humidity from SHT35, and raw signals from SGP30, SGP40, and SGP41 in an infinite loop
     float temperature = 0.0;
     float humidity = 0.0;
-    uint16_t co2_eq_ppm, tvoc_ppb;
+    uint16_t co2_eq_ppm, tvoc_ppb, tvoc_sraw, eco2_sraw;
     uint16_t sgp40_sraw_voc;
 
     auto start_time = std::chrono::system_clock::now();
@@ -201,6 +166,9 @@ int main() {
         tca9548a.set_channel(2);
         if (sgp30_read_measurements(&co2_eq_ppm, &tvoc_ppb) != 0) {
             std::cerr << "Error reading SGP30 measurements" << std::endl;
+        }
+        if (sgp30_read_raw_measurements(&tvoc_sraw, &eco2_sraw) != 0) {
+            std::cerr << "Error reading SGP30 raw measurements" << std::endl;
         }
 
         // Measure from SGP40
@@ -225,15 +193,10 @@ int main() {
             std::cerr << "Error measuring SHT35" << std::endl;
         }
 
-        // Insert data into MySQL database
-        insert_sensor_data(con, 30, tvoc_ppb, co2_eq_ppm, 1);  // Assuming sensor ID 30 for SGP30
-        insert_sensor_data(con, 40, sgp40_sraw_voc, sgp40_voc_index, 1);  // Assuming sensor ID 40 for SGP40
-        insert_sensor_data(con, 41, sraw_voc, sgp41_voc_index, 1);  // Assuming sensor ID 41 for SGP41
-        insert_sensor_data(con, 35, temperature, humidity, 1);  // Assuming sensor ID 35 for SHT35
-
         // Write data to CSV file
         data_file << timestamp << ","
                   << tvoc_ppb << "," << co2_eq_ppm << ","
+                  << tvoc_sraw << "," << eco2_sraw << ","
                   << sgp40_sraw_voc << "," << sraw_voc << "," << sraw_nox << ","
                   << sgp40_voc_index << "," << sgp41_voc_index << ","
                   << temperature << "," << humidity
@@ -258,7 +221,6 @@ int main() {
 
     // Close the CSV file
     data_file.close();
-    mysql_close(con);
 
     return 0;
 }
