@@ -47,6 +47,8 @@ int main() {
         sgp30_set_baseline(co2_baseline, tvoc_baseline);
     }
 
+    auto last_baseline_time = std::chrono::steady_clock::now();
+
     while (true) {
         uint16_t co2_eq_ppm, tvoc_ppb;
         if (sgp30_read_measurements(&co2_eq_ppm, &tvoc_ppb) != 0) {
@@ -55,10 +57,12 @@ int main() {
             std::cout << "SGP30 tVOC: " << tvoc_ppb << " ppb, CO2eq: " << co2_eq_ppm << " ppm" << std::endl;
         }
 
-        if ((/* condition to store baseline, e.g., every hour */)) {
+        auto now = std::chrono::steady_clock::now();
+        if (std::chrono::duration_cast<std::chrono::hours>(now - last_baseline_time).count() >= 1) {
             uint16_t co2, tvoc;
             if (sgp30_get_baseline(&co2, &tvoc)) {
                 write_baseline(co2, tvoc);
+                last_baseline_time = now;
             }
         }
 

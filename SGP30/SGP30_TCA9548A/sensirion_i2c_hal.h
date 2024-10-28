@@ -103,6 +103,9 @@ int8_t sensirion_i2c_hal_write(uint8_t address, const uint8_t* data,
  *
  * @param useconds the sleep time in microseconds
  */
+ 
+uint8_t sensirion_common_generate_crc(const uint8_t *data, uint16_t count); // this line is needed in the baseline calibration process
+
 void sensirion_i2c_hal_sleep_usec(uint32_t useconds);
 
 #ifdef __cplusplus

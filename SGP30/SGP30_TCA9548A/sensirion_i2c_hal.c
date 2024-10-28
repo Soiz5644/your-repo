@@ -134,3 +134,18 @@ int8_t sensirion_i2c_hal_write(uint8_t address, const uint8_t* data,
 void sensirion_i2c_hal_sleep_usec(uint32_t useconds) {
     usleep(useconds);
 }
+
+uint8_t sensirion_common_generate_crc(const uint8_t *data, uint16_t count) {
+    uint8_t crc = 0xFF;
+    for (int i = 0; i < count; i++) {
+        crc ^= data[i];
+        for (int b = 0; b < 8; b++) {
+            if (crc & 0x80) {
+                crc = (crc << 1) ^ 0x31;
+            } else {
+                crc <<= 1;
+            }
+        }
+    }
+    return crc;
+}
