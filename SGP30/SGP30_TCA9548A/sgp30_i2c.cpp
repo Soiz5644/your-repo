@@ -29,3 +29,32 @@ int sgp30_read_measurements(uint16_t *co2_eq_ppm, uint16_t *tvoc_ppb) {
 
     return 0;
 }
+
+int sgp30_get_baseline(uint16_t *co2, uint16_t *tvoc) {
+    uint8_t baseline_cmd[2] = {0x20, 0x15};
+    uint8_t data[6];
+
+    if (sensirion_i2c_hal_write(SGP30_I2C_ADDRESS, baseline_cmd, sizeof(baseline_cmd)) != 0) {
+        return -1;
+    }
+    usleep(10000); // Wait for 10ms
+
+    if (sensirion_i2c_hal_read(SGP30_I2C_ADDRESS, data, sizeof(data)) != 0) {
+        return -1;
+    }
+
+    *co2 = (data[0] << 8) | data[1];
+    *tvoc = (data[3] << 8) | data[4];
+
+    return 0;
+}
+
+int sgp30_set_baseline(uint16_t co2, uint16_t tvoc) {
+    uint8_t baseline_cmd[8] = {0x20, 0x1E, 
+                               (uint8_t)(tvoc >> 8), (uint8_t)(tvoc & 0xFF), 
+                               sensirion_common_generate_crc((uint8_t*)&tvoc, 2),
+                               (uint8_t)(co2 >> 8), (uint8_t)(co2 & 0xFF), 
+                               sensirion_common_generate_crc((uint8_t*)&co2, 2)};
+
+    return sensirion_i2c_hal_write(SGP30_I2C_ADDRESS, baseline_cmd, sizeof(baseline_cmd));
+}
