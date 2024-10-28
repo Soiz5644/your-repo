@@ -5,8 +5,10 @@
 #include <thread>
 #include <chrono>
 #include <fstream>
+#include <cstdlib> // for system()
 
 #define BASELINE_FILE "sgp30_baseline.txt"
+#define HOURS_TO_RUN 16
 
 // Function to read baseline from file
 bool read_baseline(uint16_t &co2, uint16_t &tvoc) {
@@ -48,8 +50,9 @@ int main() {
     }
 
     auto last_baseline_time = std::chrono::steady_clock::now();
+    int hours_elapsed = 0;
 
-    while (true) {
+    while (hours_elapsed < HOURS_TO_RUN) {
         uint16_t co2_eq_ppm, tvoc_ppb;
         if (sgp30_read_measurements(&co2_eq_ppm, &tvoc_ppb) != 0) {
             std::cerr << "Error reading SGP30 measurements" << std::endl;
@@ -60,14 +63,18 @@ int main() {
         auto now = std::chrono::steady_clock::now();
         if (std::chrono::duration_cast<std::chrono::hours>(now - last_baseline_time).count() >= 1) {
             uint16_t co2, tvoc;
-            if (sgp30_get_baseline(&co2, &tvoc)) {
+            if (sgp30_get_baseline(&co2, &tvoc) == 0) {
                 write_baseline(co2, tvoc);
                 last_baseline_time = now;
+                hours_elapsed++;
             }
         }
 
         std::this_thread::sleep_for(std::chrono::seconds(1));
     }
+
+    std::cout << "16 hours elapsed. Shutting down the system." << std::endl;
+    system("sudo shutdown -h now");
 
     return 0;
 }
