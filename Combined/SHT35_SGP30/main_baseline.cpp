@@ -55,11 +55,13 @@ void write_baseline(uint16_t co2, uint16_t tvoc) {
 }
 
 int main() {
+    log_debug_info("Program started.");
     sensirion_i2c_hal_init();
 
     rpi_tca9548a tca9548a;
     if (tca9548a.init(0x70) != 0) {
         std::cerr << "Failed to initialize TCA9548A" << std::endl;
+        log_debug_info("Failed to initialize TCA9548A");
         return -1;
     }
 
@@ -84,6 +86,9 @@ int main() {
     uint16_t co2_baseline, tvoc_baseline;
     if (read_baseline(co2_baseline, tvoc_baseline)) {
         sgp30_set_baseline(co2_baseline, tvoc_baseline);
+        log_debug_info("Baseline read from file: CO2 = " + std::to_string(co2_baseline) + ", TVOC = " + std::to_string(tvoc_baseline));
+    } else {
+        log_debug_info("No baseline file found, skipping baseline setting.");
     }
 
     auto last_baseline_time = std::chrono::steady_clock::now();
@@ -120,9 +125,12 @@ int main() {
         if (std::chrono::duration_cast<std::chrono::hours>(now - last_baseline_time).count() >= 1) {
             uint16_t co2, tvoc;
             if (sgp30_get_baseline(&co2, &tvoc) == 0) {
+                log_debug_info("Baseline retrieved: CO2 = " + std::to_string(co2) + ", TVOC = " + std::to_string(tvoc));
                 write_baseline(co2, tvoc);
                 last_baseline_time = now;
                 hours_elapsed++;
+            } else {
+                log_debug_info("Failed to retrieve baseline.");
             }
         }
 

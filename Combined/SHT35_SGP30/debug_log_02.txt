@@ -1,0 +1,160 @@
+[2024-10-29 08:50:28] Initializing SHT35 on channel 3...
+[2024-10-29 08:50:28] Initializing SGP30 on channel 2...
+[2024-10-29 08:50:28] Temperature: 12.817960 °C, Humidity: 70.907150 %
+[2024-10-29 08:50:28] SGP30 tVOC: 0 ppb, CO2eq: 400 ppm
+[2024-10-29 08:50:29] Temperature: 12.804608 °C, Humidity: 70.914780 %
+[2024-10-29 08:50:29] SGP30 tVOC: 0 ppb, CO2eq: 400 ppm
+[2024-10-29 08:50:30] Temperature: 12.804608 °C, Humidity: 70.884262 %
+[2024-10-29 08:50:30] SGP30 tVOC: 0 ppb, CO2eq: 400 ppm
+[2024-10-29 08:50:31] Temperature: 12.847334 °C, Humidity: 70.884262 %
+[2024-10-29 08:50:31] SGP30 tVOC: 0 ppb, CO2eq: 400 ppm
+[2024-10-29 08:50:32] Temperature: 12.817960 °C, Humidity: 70.861374 %
+[2024-10-29 08:50:32] SGP30 tVOC: 0 ppb, CO2eq: 400 ppm
+[2024-10-29 08:50:33] Temperature: 12.847334 °C, Humidity: 70.930038 %
+[2024-10-29 08:50:33] SGP30 tVOC: 0 ppb, CO2eq: 400 ppm
+[2024-10-29 08:50:34] Temperature: 12.833982 °C, Humidity: 70.939194 %
+[2024-10-29 08:50:34] SGP30 tVOC: 0 ppb, CO2eq: 400 ppm
+[2024-10-29 08:50:36] Temperature: 12.847334 °C, Humidity: 70.884262 %
+[2024-10-29 08:50:36] SGP30 tVOC: 0 ppb, CO2eq: 400 ppm
+[2024-10-29 08:50:37] Temperature: 12.804608 °C, Humidity: 70.905624 %
+[2024-10-29 08:50:37] SGP30 tVOC: 0 ppb, CO2eq: 400 ppm
+[2024-10-29 08:50:38] Temperature: 12.817960 °C, Humidity: 70.879684 %
+[2024-10-29 08:50:38] SGP30 tVOC: 0 ppb, CO2eq: 400 ppm
+[2024-10-29 08:50:39] Temperature: 12.847334 °C, Humidity: 70.923935 %
+[2024-10-29 08:50:39] SGP30 tVOC: 0 ppb, CO2eq: 400 ppm
+[2024-10-29 08:50:40] Temperature: 12.817960 °C, Humidity: 70.907150 %
+[2024-10-29 08:50:40] SGP30 tVOC: 0 ppb, CO2eq: 400 ppm
+[2024-10-29 08:50:41] Temperature: 12.804608 °C, Humidity: 70.960556 %
+[2024-10-29 08:50:41] SGP30 tVOC: 0 ppb, CO2eq: 400 ppm
+[2024-10-29 08:50:42] Temperature: 12.874037 °C, Humidity: 70.965134 %
+[2024-10-29 08:50:42] SGP30 tVOC: 0 ppb, CO2eq: 400 ppm
+[2024-10-29 08:50:43] Temperature: 12.890059 °C, Humidity: 70.957504 %
+[2024-10-29 08:50:43] SGP30 tVOC: 0 ppb, CO2eq: 400 ppm
+[2024-10-29 08:50:44] Temperature: 12.833982 °C, Humidity: 70.946823 %
+[2024-10-29 08:50:44] SGP30 tVOC: 0 ppb, CO2eq: 400 ppm
+[2024-10-29 08:50:45] Temperature: 12.804608 °C, Humidity: 70.914780 %
+[2024-10-29 08:50:45] SGP30 tVOC: 0 ppb, CO2eq: 400 ppm
+[2024-10-29 08:50:46] Temperature: 12.833982 °C, Humidity: 70.957504 %
+[2024-10-29 08:50:46] SGP30 tVOC: 0 ppb, CO2eq: 400 ppm
+[2024-10-29 08:50:47] Temperature: 12.804608 °C, Humidity: 70.933090 %
+[2024-10-29 08:50:47] SGP30 tVOC: 0 ppb, CO2eq: 409 ppm
+[2024-10-29 08:50:48] Temperature: 12.804608 °C, Humidity: 70.951401 %
+[2024-10-29 08:50:48] SGP30 tVOC: 0 ppb, CO2eq: 400 ppm
+[2024-10-29 08:50:49] Temperature: 12.817960 °C, Humidity: 70.980392 %
+[2024-10-29 08:50:49] SGP30 tVOC: 0 ppb, CO2eq: 400 ppm
+[2024-10-29 08:50:50] Temperature: 12.860685 °C, Humidity: 70.989548 %
+[2024-10-29 08:50:50] SGP30 tVOC: 0 ppb, CO2eq: 400 ppm
+[2024-10-29 08:50:51] Temperature: 12.817960 °C, Humidity: 71.020065 %
+[2024-10-29 08:50:51] SGP30 tVOC: 0 ppb, CO2eq: 401 ppm
+[2024-10-29 08:50:52] Temperature: 12.833982 °C, Humidity: 70.975815 %
+[2024-10-29 08:50:52] SGP30 tVOC: 0 ppb, CO2eq: 400 ppm
+[2024-10-29 08:50:53] Temperature: 12.833982 °C, Humidity: 70.984970 %
+[2024-10-29 08:50:53] SGP30 tVOC: 0 ppb, CO2eq: 407 ppm
+[2024-10-29 08:50:54] Temperature: 12.874037 °C, Humidity: 70.974289 %
+[2024-10-29 08:50:54] SGP30 tVOC: 0 ppb, CO2eq: 403 ppm
+[2024-10-29 08:50:55] Temperature: 12.817960 °C, Humidity: 71.010910 %
+[2024-10-29 08:50:55] SGP30 tVOC: 0 ppb, CO2eq: 406 ppm
+[2024-10-29 08:50:56] Temperature: 12.833982 °C, Humidity: 70.966660 %
+[2024-10-29 08:50:56] SGP30 tVOC: 0 ppb, CO2eq: 400 ppm
+[2024-10-29 08:50:57] Temperature: 12.874037 °C, Humidity: 71.010910 %
+[2024-10-29 08:50:57] SGP30 tVOC: 0 ppb, CO2eq: 400 ppm
+[2024-10-29 08:50:58] Temperature: 12.791257 °C, Humidity: 71.006332 %
+[2024-10-29 08:50:58] SGP30 tVOC: 0 ppb, CO2eq: 410 ppm
+[2024-10-29 08:50:59] Temperature: 12.804608 °C, Humidity: 71.053635 %
+[2024-10-29 08:50:59] SGP30 tVOC: 0 ppb, CO2eq: 400 ppm
+[2024-10-29 08:51:00] Temperature: 12.874037 °C, Humidity: 71.001755 %
+[2024-10-29 08:51:00] SGP30 tVOC: 0 ppb, CO2eq: 400 ppm
+[2024-10-29 08:51:01] Temperature: 12.817960 °C, Humidity: 71.020065 %
+[2024-10-29 08:51:01] SGP30 tVOC: 0 ppb, CO2eq: 410 ppm
+[2024-10-29 08:51:02] Temperature: 12.833982 °C, Humidity: 70.994125 %
+[2024-10-29 08:51:02] SGP30 tVOC: 0 ppb, CO2eq: 411 ppm
+[2024-10-29 08:51:03] Temperature: 12.890059 °C, Humidity: 71.061264 %
+[2024-10-29 08:51:03] SGP30 tVOC: 0 ppb, CO2eq: 408 ppm
+[2024-10-29 08:51:04] Temperature: 12.874037 °C, Humidity: 71.039902 %
+[2024-10-29 08:51:04] SGP30 tVOC: 0 ppb, CO2eq: 400 ppm
+[2024-10-29 08:51:05] Temperature: 12.860685 °C, Humidity: 71.056686 %
+[2024-10-29 08:51:05] SGP30 tVOC: 0 ppb, CO2eq: 400 ppm
+[2024-10-29 08:51:06] Temperature: 12.847334 °C, Humidity: 71.061264 %
+[2024-10-29 08:51:06] SGP30 tVOC: 0 ppb, CO2eq: 409 ppm
+[2024-10-29 08:51:07] Temperature: 12.860685 °C, Humidity: 71.007858 %
+[2024-10-29 08:51:07] SGP30 tVOC: 0 ppb, CO2eq: 400 ppm
+[2024-10-29 08:51:08] Temperature: 12.817960 °C, Humidity: 71.038376 %
+[2024-10-29 08:51:08] SGP30 tVOC: 0 ppb, CO2eq: 416 ppm
+[2024-10-29 08:51:09] Temperature: 12.874037 °C, Humidity: 71.010910 %
+[2024-10-29 08:51:09] SGP30 tVOC: 0 ppb, CO2eq: 401 ppm
+[2024-10-29 08:51:10] Temperature: 12.860685 °C, Humidity: 71.102463 %
+[2024-10-29 08:51:10] SGP30 tVOC: 0 ppb, CO2eq: 407 ppm
+[2024-10-29 08:51:11] Temperature: 12.860685 °C, Humidity: 71.102463 %
+[2024-10-29 08:51:11] SGP30 tVOC: 0 ppb, CO2eq: 405 ppm
+[2024-10-29 08:51:12] Temperature: 12.847334 °C, Humidity: 71.042953 %
+[2024-10-29 08:51:12] SGP30 tVOC: 0 ppb, CO2eq: 400 ppm
+[2024-10-29 08:51:13] Temperature: 12.847334 °C, Humidity: 71.042953 %
+[2024-10-29 08:51:13] SGP30 tVOC: 0 ppb, CO2eq: 402 ppm
+[2024-10-29 08:51:14] Temperature: 12.890059 °C, Humidity: 71.024643 %
+[2024-10-29 08:51:14] SGP30 tVOC: 0 ppb, CO2eq: 402 ppm
+[2024-10-29 08:51:15] Temperature: 12.847334 °C, Humidity: 70.997177 %
+[2024-10-29 08:51:15] SGP30 tVOC: 0 ppb, CO2eq: 400 ppm
+[2024-10-29 08:51:16] Temperature: 12.817960 °C, Humidity: 71.001755 %
+[2024-10-29 08:51:17] SGP30 tVOC: 0 ppb, CO2eq: 402 ppm
+[2024-10-29 08:51:18] Temperature: 12.916762 °C, Humidity: 71.047531 %
+[2024-10-29 08:51:18] SGP30 tVOC: 0 ppb, CO2eq: 400 ppm
+[2024-10-29 08:51:19] Temperature: 12.833982 °C, Humidity: 71.039902 %
+[2024-10-29 08:51:19] SGP30 tVOC: 0 ppb, CO2eq: 400 ppm
+[2024-10-29 08:51:20] Temperature: 12.817960 °C, Humidity: 71.020065 %
+[2024-10-29 08:51:20] SGP30 tVOC: 3 ppb, CO2eq: 412 ppm
+[2024-10-29 08:51:21] Temperature: 12.903410 °C, Humidity: 71.044479 %
+[2024-10-29 08:51:21] SGP30 tVOC: 2 ppb, CO2eq: 413 ppm
+[2024-10-29 08:51:22] Temperature: 12.874037 °C, Humidity: 71.039902 %
+[2024-10-29 08:51:22] SGP30 tVOC: 0 ppb, CO2eq: 410 ppm
+[2024-10-29 08:51:23] Temperature: 12.890059 °C, Humidity: 71.012436 %
+[2024-10-29 08:51:23] SGP30 tVOC: 0 ppb, CO2eq: 412 ppm
+[2024-10-29 08:51:24] Temperature: 12.847334 °C, Humidity: 70.988022 %
+[2024-10-29 08:51:24] SGP30 tVOC: 2 ppb, CO2eq: 410 ppm
+[2024-10-29 08:51:25] Temperature: 12.860685 °C, Humidity: 70.989548 %
+[2024-10-29 08:51:25] SGP30 tVOC: 0 ppb, CO2eq: 400 ppm
+[2024-10-29 08:51:26] Temperature: 12.903410 °C, Humidity: 70.989548 %
+[2024-10-29 08:51:26] SGP30 tVOC: 0 ppb, CO2eq: 410 ppm
+[2024-10-29 08:51:27] Temperature: 12.874037 °C, Humidity: 71.001755 %
+[2024-10-29 08:51:27] SGP30 tVOC: 0 ppb, CO2eq: 409 ppm
+[2024-10-29 08:51:28] Temperature: 12.890059 °C, Humidity: 70.975815 %
+[2024-10-29 08:51:28] SGP30 tVOC: 0 ppb, CO2eq: 406 ppm
+[2024-10-29 08:51:29] Temperature: 12.916762 °C, Humidity: 71.010910 %
+[2024-10-29 08:51:29] SGP30 tVOC: 0 ppb, CO2eq: 400 ppm
+[2024-10-29 08:51:30] Temperature: 12.860685 °C, Humidity: 71.007858 %
+[2024-10-29 08:51:30] SGP30 tVOC: 0 ppb, CO2eq: 403 ppm
+[2024-10-29 08:51:31] Temperature: 12.890059 °C, Humidity: 70.948349 %
+[2024-10-29 08:51:31] SGP30 tVOC: 2 ppb, CO2eq: 400 ppm
+[2024-10-29 08:51:32] Temperature: 12.890059 °C, Humidity: 70.975815 %
+[2024-10-29 08:51:32] SGP30 tVOC: 0 ppb, CO2eq: 406 ppm
+[2024-10-29 08:51:33] Temperature: 12.890059 °C, Humidity: 71.006332 %
+[2024-10-29 08:51:33] SGP30 tVOC: 4 ppb, CO2eq: 400 ppm
+[2024-10-29 08:51:34] Temperature: 12.916762 °C, Humidity: 71.010910 %
+[2024-10-29 08:51:34] SGP30 tVOC: 0 ppb, CO2eq: 405 ppm
+[2024-10-29 08:51:35] Temperature: 12.903410 °C, Humidity: 71.017014 %
+[2024-10-29 08:51:35] SGP30 tVOC: 3 ppb, CO2eq: 408 ppm
+[2024-10-29 08:51:36] Temperature: 12.890059 °C, Humidity: 71.012436 %
+[2024-10-29 08:51:36] SGP30 tVOC: 0 ppb, CO2eq: 407 ppm
+[2024-10-29 08:51:37] Temperature: 12.890059 °C, Humidity: 70.939194 %
+[2024-10-29 08:51:37] SGP30 tVOC: 0 ppb, CO2eq: 400 ppm
+[2024-10-29 08:51:38] Temperature: 12.903410 °C, Humidity: 71.007858 %
+[2024-10-29 08:51:38] SGP30 tVOC: 8 ppb, CO2eq: 407 ppm
+[2024-10-29 08:51:39] Temperature: 12.890059 °C, Humidity: 70.957504 %
+[2024-10-29 08:51:39] SGP30 tVOC: 9 ppb, CO2eq: 400 ppm
+[2024-10-29 08:51:40] Temperature: 12.932784 °C, Humidity: 70.975815 %
+[2024-10-29 08:51:40] SGP30 tVOC: 5 ppb, CO2eq: 405 ppm
+[2024-10-29 08:51:41] Temperature: 12.916762 °C, Humidity: 70.962082 %
+[2024-10-29 08:51:41] SGP30 tVOC: 0 ppb, CO2eq: 405 ppm
+[2024-10-29 08:51:42] Temperature: 12.972839 °C, Humidity: 70.897995 %
+[2024-10-29 08:51:42] SGP30 tVOC: 2 ppb, CO2eq: 400 ppm
+[2024-10-29 08:51:43] Temperature: 12.932784 °C, Humidity: 70.919357 %
+[2024-10-29 08:51:43] SGP30 tVOC: 0 ppb, CO2eq: 400 ppm
+[2024-10-29 08:51:44] Temperature: 12.972839 °C, Humidity: 70.928513 %
+[2024-10-29 08:51:44] SGP30 tVOC: 0 ppb, CO2eq: 410 ppm
+[2024-10-29 08:51:45] Temperature: 12.959487 °C, Humidity: 70.905624 %
+[2024-10-29 08:51:45] SGP30 tVOC: 4 ppb, CO2eq: 408 ppm
+[2024-10-29 08:51:46] Temperature: 12.946136 °C, Humidity: 70.875107 %
+[2024-10-29 08:51:46] SGP30 tVOC: 1 ppb, CO2eq: 409 ppm
+[2024-10-29 08:51:47] Temperature: 12.946136 °C, Humidity: 70.930038 %
+[2024-10-29 08:51:47] SGP30 tVOC: 0 ppb, CO2eq: 400 ppm
+[2024-10-29 08:51:48] Temperature: 12.946136 °C, Humidity: 70.911728 %
+[2024-10-29 08:51:48] SGP30 tVOC: 0 ppb, CO2eq: 417 ppm
