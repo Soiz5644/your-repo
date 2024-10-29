@@ -44,6 +44,7 @@ bool read_baseline(uint16_t &co2, uint16_t &tvoc) {
 
 // Function to write baseline to file
 void write_baseline(uint16_t co2, uint16_t tvoc) {
+    log_debug_info("Attempting to write baseline to file.");
     std::ofstream outfile(BASELINE_FILE);
     if (outfile.is_open()) {
         outfile << co2 << " " << tvoc;
