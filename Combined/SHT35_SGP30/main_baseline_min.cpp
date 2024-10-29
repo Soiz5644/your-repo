@@ -162,7 +162,7 @@ int main() {
         auto now = std::chrono::steady_clock::now();
         if (std::chrono::duration_cast<std::chrono::minutes>(now - last_baseline_time).count() >= 1) { // Change to minutes for testing
             uint16_t co2, tvoc;
-            if (sgp30_get_iaq_baseline(&co2, &tvoc) == 0) {
+            if (sgp30_get_baseline(&co2, &tvoc) == 0) {
                 log_debug_info("Baseline retrieved: CO2 = " + std::to_string(co2) + ", TVOC = " + std::to_string(tvoc));
                 write_baseline(co2, tvoc);
                 last_baseline_time = now;
