@@ -10,7 +10,6 @@
 
 #define BASELINE_FILE "sgp30_baseline.txt"
 #define DEBUG_FILE "debug_log.txt"
-#define TEST_DURATION_MINUTES 10
 #define HOURS_TO_RUN 16
 #define NO_ERROR 0 // Ensure NO_ERROR is defined
 
@@ -76,10 +75,9 @@ int main() {
     }
 
     auto last_baseline_time = std::chrono::steady_clock::now();
-    int minutes_elapsed = 0;
     int hours_elapsed = 0;
 
-    while (hours_elapsed < HOURS_TO_RUN && minutes_elapsed < TEST_DURATION_MINUTES) {
+    while (hours_elapsed < HOURS_TO_RUN) {
         // Measure temperature and humidity from SHT35
         float temperature = 0.0;
         float humidity = 0.0;
@@ -91,10 +89,9 @@ int main() {
 
         // Set the relative humidity for SGP30
         tca9548a.set_channel(2);
-        float abs_humidity = sgp30_set_relative_humidity(temperature, humidity);
+        sgp30_set_relative_humidity(temperature, humidity);
         std::string debug_message = "Temperature: " + std::to_string(temperature) +
-                                    " °C, Humidity: " + std::to_string(humidity) +
-                                    " %, Absolute Humidity: " + std::to_string(abs_humidity) + " g/m³";
+                                    " °C, Humidity: " + std::to_string(humidity) + " %";
         std::cout << debug_message << std::endl;
         log_debug_info(debug_message);
 
@@ -118,17 +115,11 @@ int main() {
         }
 
         std::this_thread::sleep_for(std::chrono::seconds(1));
-        minutes_elapsed++;
     }
 
-    if (hours_elapsed >= HOURS_TO_RUN) {
-        std::cout << "16 hours elapsed. Shutting down the system." << std::endl;
-        log_debug_info("16 hours elapsed. Shutting down the system.");
-        system("sudo shutdown -h now");
-    } else {
-        std::cout << "Test duration of 10 minutes completed. Exiting without shutdown." << std::endl;
-        log_debug_info("Test duration of 10 minutes completed. Exiting without shutdown.");
-    }
+    std::cout << "16 hours elapsed. Shutting down the system." << std::endl;
+    log_debug_info("16 hours elapsed. Shutting down the system.");
+    system("sudo shutdown -h now");
 
     return 0;
 }
