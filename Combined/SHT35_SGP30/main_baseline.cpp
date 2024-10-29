@@ -14,6 +14,23 @@
 #define HOURS_TO_RUN 16
 #define NO_ERROR 0 // Ensure NO_ERROR is defined
 
+// Function to log debug information
+void log_debug_info(const std::string& message) {
+    std::ofstream debug_file(DEBUG_FILE, std::ios::app);
+    if (debug_file.is_open()) {
+        // Get current time
+        std::time_t now = std::time(nullptr);
+        std::tm* local_time = std::localtime(&now);
+        char time_str[100];
+        std::strftime(time_str, sizeof(time_str), "%Y-%m-%d %H:%M:%S", local_time);
+
+        debug_file << "[" << time_str << "] " << message << std::endl;
+        debug_file.close();
+    } else {
+        std::cerr << "Unable to open debug log file" << std::endl;
+    }
+}
+
 // Function to read baseline from file
 bool read_baseline(uint16_t &co2, uint16_t &tvoc) {
     std::ifstream infile(BASELINE_FILE);
@@ -34,23 +51,6 @@ void write_baseline(uint16_t co2, uint16_t tvoc) {
         log_debug_info("Baseline written to file: CO2 = " + std::to_string(co2) + ", TVOC = " + std::to_string(tvoc));
     } else {
         log_debug_info("Failed to open baseline file for writing.");
-    }
-}
-
-// Function to log debug information
-void log_debug_info(const std::string& message) {
-    std::ofstream debug_file(DEBUG_FILE, std::ios::app);
-    if (debug_file.is_open()) {
-        // Get current time
-        std::time_t now = std::time(nullptr);
-        std::tm* local_time = std::localtime(&now);
-        char time_str[100];
-        std::strftime(time_str, sizeof(time_str), "%Y-%m-%d %H:%M:%S", local_time);
-
-        debug_file << "[" << time_str << "] " << message << std::endl;
-        debug_file.close();
-    } else {
-        std::cerr << "Unable to open debug log file" << std::endl;
     }
 }
 
