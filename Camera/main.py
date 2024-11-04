@@ -21,7 +21,7 @@ try:
 
     # Set the recording parameters
     output_filename = "/media/pi/PHILIPS UFD/video.h264"
-    camera.start_recording(output_filename, bitrate=int(max_bitrate))
+    camera.start_recording(output_filename, bitrate=int(max_bitrate), format='mjpeg')
 
     # Record for the specified duration
     camera.wait_recording(duration)

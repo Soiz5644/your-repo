@@ -1,4 +1,5 @@
 import picamera
+from datetime import datetime
 
 # Set the highest video resolution supported by the OV5647 camera
 resolution = (2592, 1944)  # Maximum resolution for OV5647
@@ -15,9 +16,12 @@ try:
     # Set the maximum bitrate for high quality
     max_bitrate = 25000000  # 25 Mbps
 
+    # Get the current date and time
+    creation_time = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+
     # Set the recording parameters
-    output_filename = "/media/pi/PHILIPS UFD/video.mjpeg"
-    camera.start_recording(output_filename, bitrate=int(max_bitrate), format='mjpeg')
+    output_filename = f"/media/pi/PHILIPS UFD/video_{creation_time}.h264"
+    camera.start_recording(output_filename, bitrate=int(max_bitrate))
 
     # Keep recording until stopped by the user
     while True:
@@ -30,3 +34,7 @@ finally:
     # Stop recording and release the camera
     camera.stop_recording()
     camera.close()
+
+    # Save the creation date and time to a text file
+    with open(f"/media/pi/PHILIPS UFD/video_metadata_{creation_time}.txt", "w") as metadata_file:
+        metadata_file.write(f"Video creation date and time: {creation_time}")
