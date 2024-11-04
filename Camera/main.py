@@ -5,7 +5,7 @@ import datetime
 duration = 4 * 60 * 60
 
 # Set the video resolution and format
-resolution = (1920, 1080)  # Full HD resolution
+resolution = (2592, 1944)  # Full HD resolution
 framerate = 30  # Frames per second
 
 # Create a camera object

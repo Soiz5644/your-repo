@@ -1,7 +1,7 @@
 import picamera
 
-# Set the highest video resolution and format supported by the Raspberry Pi camera
-resolution = (3280, 2464)  # Maximum resolution for Raspberry Pi Camera Module V2
+# Set the highest video resolution and format supported by the OV5647 camera
+resolution = (2592, 1944)  # Maximum resolution for OV5647
 framerate = 30  # Frames per second
 
 # Create a camera object
