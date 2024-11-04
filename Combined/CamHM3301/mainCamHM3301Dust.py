@@ -66,6 +66,7 @@ def select_tca9548a_channel(bus, channel):
     if channel < 0 or channel > 7:
         raise ValueError("Invalid channel: must be between 0 and 7")
     bus.write_byte(TCA9548A_ADDR, 1 << channel)
+    print(f"Channel {channel} selected on TCA9548A")
 
 def log_to_csv(data, csv_file_path):
     with open(csv_file_path, "a", newline="") as csvfile:
