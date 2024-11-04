@@ -23,6 +23,7 @@ int main() {
     uint8_t data[29];
 
     // Test Sensor 1 on Channel 5
+    std::cout << "Selecting channel 5..." << std::endl;
     select_channel(tca, 5);
     if (sensor.init() == NO_ERROR) {
         if (sensor.read_sensor_value(data, 29) == NO_ERROR) {
@@ -39,6 +40,7 @@ int main() {
     }
 
     // Test Sensor 2 on Channel 7
+    std::cout << "Selecting channel 7..." << std::endl;
     select_channel(tca, 7);
     if (sensor.init() == NO_ERROR) {
         if (sensor.read_sensor_value(data, 29) == NO_ERROR) {
