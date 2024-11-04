@@ -16,8 +16,8 @@ try:
     max_bitrate = 25000000  # 25 Mbps
 
     # Set the recording parameters
-    output_filename = "/media/pi/PHILIPS UFD/video.mkv"
-    camera.start_recording(output_filename, bitrate=int(max_bitrate), format='mkv')
+    output_filename = "/media/pi/PHILIPS UFD/video.mjpeg"
+    camera.start_recording(output_filename, bitrate=int(max_bitrate), format='mjpeg')
 
     # Keep recording until stopped by the user
     while True:
