@@ -102,6 +102,7 @@ try:
         # Sensor data reading and logging loop
         for sensor, channel, sensor_name in [(sensor1, 5, "Sensor 1"), (sensor2, 7, "Sensor 2")]:
             select_tca9548a_channel(bus, channel)
+            time.sleep(0.1)  # Give some time for the channel selection to take effect
             std_PM1 = sensor.get_data(0)
             std_PM2_5 = sensor.get_data(1)
             std_PM10 = sensor.get_data(2)
