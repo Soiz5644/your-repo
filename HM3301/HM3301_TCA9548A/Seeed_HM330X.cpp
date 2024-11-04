@@ -17,8 +17,9 @@ HM330XErrorCode HM330X::init() {
 HM330XErrorCode HM330X::read_sensor_value(uint8_t* data, uint32_t data_len) {
     uint32_t time_out_count = 0;
     HM330XErrorCode ret = NO_ERROR;
-    wiringPiI2CReadReg8(_IIC_ADDR, 29); // Replace Wire.requestFrom with wiringPi equivalent
-    while (data_len != wiringPiI2CReadReg8(_IIC_ADDR, 29)) {
+    // Request data from the sensor
+    wiringPiI2CReadReg8(this->_IIC_ADDR, 29);
+    while (data_len != wiringPiI2CReadReg8(this->_IIC_ADDR, 29)) {
         time_out_count++;
         if (time_out_count > 10) {
             return ERROR_COMM;
@@ -26,7 +27,7 @@ HM330XErrorCode HM330X::read_sensor_value(uint8_t* data, uint32_t data_len) {
         delay(1);
     }
     for (int i = 0; i < data_len; i++) {
-        data[i] = wiringPiI2CReadReg8(_IIC_ADDR, i);
+        data[i] = wiringPiI2CReadReg8(this->_IIC_ADDR, i);
     }
     return ret;
 }

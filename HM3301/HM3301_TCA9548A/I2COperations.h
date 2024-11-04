@@ -16,7 +16,7 @@ class I2COperations {
     HM330XErrorCode IIC_read_bytes(uint8_t start_reg, uint8_t* data, uint32_t data_len);
     HM330XErrorCode IIC_SEND_CMD(uint8_t CMD);
 
-  private:
+  protected:
     uint8_t _IIC_ADDR;
 };
 
