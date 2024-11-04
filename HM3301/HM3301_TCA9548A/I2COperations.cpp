@@ -1,5 +1,7 @@
 #include "I2COperations.h"
 #include <iostream>
+#include <errno.h>
+#include <string.h>
 
 HM330XErrorCode I2COperations::IIC_write_byte(uint8_t reg, uint8_t byte) {
     int ret = wiringPiI2CWriteReg8(_IIC_ADDR, reg, byte);
@@ -41,7 +43,7 @@ void I2COperations::set_iic_addr(uint8_t IIC_ADDR) {
 HM330XErrorCode I2COperations::IIC_SEND_CMD(uint8_t CMD) {
     int ret = wiringPiI2CWrite(_IIC_ADDR, CMD);
     if (ret != 0) {
-        std::cerr << "IIC_SEND_CMD failed with error: " << ret << std::endl;
+        std::cerr << "IIC_SEND_CMD failed with error: " << ret << " (" << strerror(errno) << ")" << std::endl;
     }
     return ret == 0 ? NO_ERROR : ERROR_COMM;
 }
