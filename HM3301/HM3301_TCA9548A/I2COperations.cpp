@@ -37,7 +37,12 @@ HM330XErrorCode I2COperations::IIC_read_bytes(uint8_t reg, uint8_t* data, uint32
 }
 
 void I2COperations::set_iic_addr(uint8_t IIC_ADDR) {
-    _IIC_ADDR = IIC_ADDR;
+    _IIC_ADDR = wiringPiI2CSetup(IIC_ADDR);
+    if (_IIC_ADDR == -1) {
+        std::cerr << "Failed to initialize I2C device at address: " << (int)IIC_ADDR << " (" << strerror(errno) << ")" << std::endl;
+    } else {
+        std::cout << "Initialized I2C device at address: " << (int)IIC_ADDR << std::endl;
+    }
 }
 
 HM330XErrorCode I2COperations::IIC_SEND_CMD(uint8_t CMD) {
