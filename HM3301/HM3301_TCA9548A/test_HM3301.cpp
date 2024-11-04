@@ -10,11 +10,14 @@
 
 int main() {
     // Initialize the TCA9548A
-    rpi_tca9548a tca9548a(TCA9548A_ADDR);
-    if (!tca9548a.selectChannel(TCA9548A_CHANNEL)) {
-        std::cerr << "Failed to select channel on TCA9548A" << std::endl;
+    rpi_tca9548a tca9548a;
+    if (tca9548a.init(TCA9548A_ADDR) != 0) {
+        std::cerr << "Failed to initialize TCA9548A" << std::endl;
         return 1;
     }
+
+    // Select channel 5
+    tca9548a.set_channel(TCA9548A_CHANNEL);
 
     // Initialize the HM3301 sensor
     HM330X sensor(HM3301_ADDR);
