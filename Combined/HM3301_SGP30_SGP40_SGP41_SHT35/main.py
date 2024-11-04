@@ -72,8 +72,6 @@ def log_to_csv(data, csv_file_path):
 
 # Create I2C bus object and sensor instances
 bus = smbus2.SMBus(1)
-sensor1 = HM3301(i2c=bus, addr=HM330_I2C_ADDR)
-sensor2 = HM3301(i2c=bus, addr=HM330_I2C_ADDR)
 
 # Initialize camera
 camera = picamera.PiCamera()
@@ -100,9 +98,10 @@ try:
             break
 
         # Sensor data reading and logging loop
-        for sensor, channel, sensor_name in [(sensor1, 5, "Sensor 1"), (sensor2, 7, "Sensor 2")]:
+        for channel, sensor_name in [(5, "Sensor 1"), (7, "Sensor 2")]:
             select_tca9548a_channel(bus, channel)
             time.sleep(0.1)  # Give some time for the channel selection to take effect
+            sensor = HM3301(i2c=bus, addr=HM330_I2C_ADDR)
             std_PM1 = sensor.get_data(0)
             std_PM2_5 = sensor.get_data(1)
             std_PM10 = sensor.get_data(2)
