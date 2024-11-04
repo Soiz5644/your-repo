@@ -123,11 +123,11 @@ try:
 
         # Read Dust sensor data
         try:
-            [new_val, lowpulseoccupancy] = grovepi.dustSensorRead()
+            new_val = grovepi.dust_sensor_read()
             if new_val:
                 timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-                log_to_csv([timestamp, "Dust Sensor", lowpulseoccupancy], csv_file_path)
-                print(f"Dust Sensor: {lowpulseoccupancy} LPO")
+                log_to_csv([timestamp, "Dust Sensor", *new_val], csv_file_path)
+                print(f"Dust Sensor -> LPO time = {new_val[0]}, LPO% = {new_val[1]:.2f}, pcs/0.01cf = {new_val[2]:.1f}")
         except IOError:
             print("Error reading from Dust Sensor")
 
