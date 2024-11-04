@@ -1,34 +1,23 @@
-# test HM3301 Laser Dust Sensor
-
-# must run "sudo pigpiod" before starting
-
 import SDL_Pi_HM3301
-import time
-import traceback
 import pigpio
+import time  # Add this import
 
+# Set up pigpio
 mypi = pigpio.pi()
 
-mySDA = 21
-mySCL = 20
+# Set the I2C pins
+mySDA = 20
+mySCL = 19
 
-hm3301 = SDL_Pi_HM3301.SDL_Pi_HM3301(SDA=mySDA, SCL=mySCL, pi=mypi)
-time.sleep(0.01)
+# Initialize the sensor with the correct parameters
+hm3301 = SDL_Pi_HM3301.SDL_Pi_HM3301(mypi, mySDA, mySCL)
+
 try:
-    while 1:
-
-
-        myData = hm3301.get_data()
-        print ("data=",myData)
-        if (hm3301.checksum() != True):
-            print("Checksum Error!")
-        myAQI = hm3301.get_aqi()
-        hm3301.print_data()
-        print ("AQI=", myAQI)
-
-        time.sleep(3)
-
-except:
-    print ("closing hm3301")
-    print(traceback.format_exc())
+    while True:
+        data = hm3301.get_data()
+        if data:
+            hm3301.parse_data(data)
+        time.sleep(1)
+except KeyboardInterrupt:
     hm3301.close()
+    print("closing hm3301")

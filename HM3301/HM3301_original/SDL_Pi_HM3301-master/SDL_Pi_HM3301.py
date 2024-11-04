@@ -1,111 +1,53 @@
-# HM3301 Laser Dust Sensor Driver
-# SwitchDoc Labs 2020
-# Version 1.0
-
-
 import time
 import pigpio
-import aqi
 
-SDA = 20
-SCL = 19
-
-
-DATA_CNT = 29
-
-
-class SDL_Pi_HM3301(object):
-
-    def __init__(self, SDA=20, SCL=19, I2C_Address =0x40, pi= None):
-
-
-
+class SDL_Pi_HM3301:
+    def __init__(self, pi, sda_pin, scl_pin):
         self.pi = pi
-        self.SDA = SDA
-        self.SCL = SCL
-        self.I2C_Address = I2C_Address
-        self.last_data = None
+        self.handle = pi.i2c_open(1, 0x40)
+        self.sda = sda_pin
+        self.scl = scl_pin
 
-        self.PM_1_0_conctrt_std = 0         # PM1.0 Standard particulate matter concentration Unit:ug/m3
-        self.PM_2_5_conctrt_std = 0         # PM2.5 Standard particulate matter concentration Unit:ug/m3
-        self.PM_10_conctrt_std = 0          # PM10  Standard particulate matter concentration Unit:ug/m3
-    
-        self.PM_1_0_conctrt_atmosph = 0     #PM1.0 Atmospheric environment concentration ,unit:ug/m3
-        self.PM_2_5_conctrt_atmosph = 0     #PM2.5 Atmospheric environment concentration ,unit:ug/m3
-        self.PM_10_conctrt_atmosph = 0      #PM10  Atmospheric environment concentration ,unit:ug/m3
-   
-        # set pullups - not necessary with Pi2Grover
+    def get_data(self):
+        count, data = self.pi.i2c_read_device(self.handle, 29)
+        if count != 29:
+            print(f"Error: Expected 29 bytes, got {count}")
+            return []
+        print(f"Data read: {data}")
+        return data
 
-        self.pi.set_pull_up_down(self.SDA, pigpio.PUD_UP)
-        self.pi.set_pull_up_down(self.SCL, pigpio.PUD_UP)
-        h = self.pi.bb_i2c_open(self.SDA, self.SCL, 20000)    
-
-        (count, data) = self.pi.bb_i2c_zip(
-             self.SDA, [4, self.I2C_Address, 2,7,1, 0x80,2,7,1,0x88,3,0])
-        time.sleep(10.0/1000.0)
-
-
-    def read_HM3301_data(self):
-
-        (count, data) = self.pi.bb_i2c_zip(
-             self.SDA, [4,self.I2C_Address,2,7,1,0x81,3, 2,6,DATA_CNT,3,0   ])
-
-
-        return list(data)
-
-    def close(self):
-        self.pi.bb_i2c_close(self.SDA)
-        self.pi.stop()
-
-        
-
-            
-    def checksum(self):
-        sum = 0
-        for i in range(DATA_CNT-1):
-            sum += self.last_data[i]
-        sum = sum & 0xff
-        return (sum==self.last_data[28])
-
-   
     def parse_data(self, data):
-
+        if len(data) < 29:
+            print("Error: Data length is less than expected 29 bytes")
+            return
         self.PM_1_0_conctrt_std = data[4]<<8 | data[5]
         self.PM_2_5_conctrt_std = data[6]<<8 | data[7]
         self.PM_10_conctrt_std = data[8]<<8 | data[9]
-        
-        self.PM_1_0_conctrt_atmosph = data[10]<<8 | data[11]          
-        self.PM_2_5_conctrt_atmosph = data[12]<<8 | data[13]
-        self.PM_10_conctrt_atmosph  = data[14]<<8 | data[15]
+        self.PM_1_0_conctrt_atm = data[10]<<8 | data[11]
+        self.PM_2_5_conctrt_atm = data[12]<<8 | data[13]
+        self.PM_10_conctrt_atm = data[14]<<8 | data[15]
+        self.PM_0_3_cnt = data[16]<<8 | data[17]
+        self.PM_0_5_cnt = data[18]<<8 | data[19]
+        self.PM_1_0_cnt = data[20]<<8 | data[21]
+        self.PM_2_5_cnt = data[22]<<8 | data[23]
+        self.PM_5_0_cnt = data[24]<<8 | data[25]
+        self.PM_10_cnt = data[26]<<8 | data[27]
+        print("Parsed data successfully")
 
-    def get_data(self):
-        data = self.read_HM3301_data()
-        self.last_data = data
-        self.parse_data(data)
-        return list( (self.PM_1_0_conctrt_std, self.PM_2_5_conctrt_std,  self.PM_10_conctrt_std,  self.PM_1_0_conctrt_atmosph, self.PM_2_5_conctrt_atmosph, self.PM_10_conctrt_atmosph))
+    def close(self):
+        self.pi.i2c_close(self.handle)
 
-    def print_data(self):
-
-        print("PM1.0 Standard particulate matter concentration Unit:ug/m3 = %d"
-%self.PM_1_0_conctrt_std)
-        print("PM2.5 Standard particulate matter concentration Unit:ug/m3 = %d"
-%self.PM_2_5_conctrt_std)
-        print("PM10  Standard particulate matter concentration Unit:ug/m3 = %d"
-%self.PM_10_conctrt_std)
-
-        print("PM1.0 Atmospheric environment concentration ,unit:ug/m3 = %d" %self.PM_1_0_conctrt_atmosph)
-        print("PM2.5 Atmospheric environment concentration ,unit:ug/m3 = %d" %self.PM_2_5_conctrt_atmosph)
-        print("PM10  Atmospheric environment concentration ,unit:ug/m3 = %d" %self.PM_10_conctrt_atmosph)
-        print(" ")
-        print(" ")
-        print(" ")
-
-    def get_aqi(self):
-
-
-        myaqi = aqi.to_aqi([
-         (aqi.POLLUTANT_PM25, self.PM_2_5_conctrt_std),
-         (aqi.POLLUTANT_PM10, self.PM_10_conctrt_std)
-        ])
-
-        return str(myaqi)
+# Example usage
+if __name__ == "__main__":
+    pi = pigpio.pi()
+    hm3301 = SDL_Pi_HM3301(pi, 20, 19)
+    
+    try:
+        while True:
+            data = hm3301.get_data()
+            if data:
+                hm3301.parse_data(data)
+            time.sleep(1)
+    except KeyboardInterrupt:
+        hm3301.close()
+        print("closing hm3301")
