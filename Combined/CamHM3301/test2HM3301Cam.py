@@ -101,7 +101,7 @@ try:
         # Sensor data reading and logging loop
         for channel, sensor_name in [(5, "Sensor 1"), (7, "Sensor 2")]:
             select_tca9548a_channel(bus, channel)
-            time.sleep(0.5)  # Increased delay for the channel selection to take effect
+            time.sleep(1)  # Increased delay for the channel selection to take effect
             sensor = HM3301(i2c=bus, addr=HM330_I2C_ADDR)
             std_PM1 = sensor.get_data(0)
             std_PM2_5 = sensor.get_data(1)
