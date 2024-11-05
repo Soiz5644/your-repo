@@ -61,8 +61,8 @@ def log_to_csv(data):
 bus = smbus2.SMBus(1)
 
 # Instanciation des capteurs sur le TCA9548A, canaux 0 et 1
-sensor1 = HM3301(i2c=bus, addr=HM330_I2C_ADDR)  # Capteur sur le canal 0
-sensor2 = HM3301(i2c=bus, addr=HM330_I2C_ADDR)  # Capteur sur le canal 1
+sensor1 = HM3301(i2c=bus, addr=HM330_I2C_ADDR)  # Capteur sur le canal 5
+sensor2 = HM3301(i2c=bus, addr=HM330_I2C_ADDR)  # Capteur sur le canal 7
 
 # Temporisation pour l'initialisation des capteurs
 time.sleep(30)
@@ -72,7 +72,7 @@ try:
     log_to_csv(["Timestamp", "Sensor", "PM1.0", "PM2.5", "PM10"])
 
     while True:
-        for sensor, channel, sensor_name in [(sensor1, 0, "Sensor 1"), (sensor2, 1, "Sensor 2")]:
+        for sensor, channel, sensor_name in [(sensor1, 5, "Sensor 1"), (sensor2, 7, "Sensor 2")]:
             # Sélectionner le canal sur le multiplexeur
             select_tca9548a_channel(bus, channel)
 
