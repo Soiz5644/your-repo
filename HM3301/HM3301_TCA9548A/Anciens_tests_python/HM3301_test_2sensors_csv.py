@@ -60,9 +60,11 @@ def log_to_csv(data):
 # Création d'un objet bus I2C
 bus = smbus2.SMBus(1)
 
-# Instanciation des capteurs sur le TCA9548A, canaux 0 et 1
-sensor1 = HM3301(i2c=bus, addr=HM330_I2C_ADDR)  # Capteur sur le canal 5
-sensor2 = HM3301(i2c=bus, addr=HM330_I2C_ADDR)  # Capteur sur le canal 7
+# Instanciation des capteurs sur le TCA9548A, canaux 5 et 7
+#select_tca9548a_channel(bus, 5)  # Capteur 1 sur le canal 5
+sensor1 = HM3301(i2c=bus, addr=HM330_I2C_ADDR)
+#select_tca9548a_channel(bus, 7)  # Capteur 2 sur le canal 7
+sensor2 = HM3301(i2c=bus, addr=HM330_I2C_ADDR)
 
 # Temporisation pour l'initialisation des capteurs
 time.sleep(30)

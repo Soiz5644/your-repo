@@ -60,8 +60,8 @@ def log_to_csv(data):
 # Création d'un objet bus I2C
 bus = smbus2.SMBus(1)
 
-# Sélectionner le canal 0 du TCA9548A (pour le capteur HM3301)
-select_tca9548a_channel(bus, 0)
+# Sélectionner le canal 7 du TCA9548A (pour le capteur HM3301)
+select_tca9548a_channel(bus, 7)
 
 # Instanciation du capteur HM3301
 sensor = HM3301(i2c=bus)
