@@ -1,90 +1,127 @@
+#include <wiringPi.h>
 #include <wiringPiI2C.h>
 #include <iostream>
-#include <unistd.h>
-#include <vector> // Add this line
-
-// Constants for FS3000
-#define FS3000_DEVICE_ADDRESS 0x28
-#define AIRFLOW_RANGE_7_MPS 0x00
-#define AIRFLOW_RANGE_15_MPS 0x01
 
 class FS3000 {
 public:
-    FS3000(int i2c_fd) : fd(i2c_fd), range(AIRFLOW_RANGE_7_MPS) {
-        mpsDataPoint = {0, 1.07, 2.01, 3.00, 3.97, 4.96, 5.98, 6.99, 7.23};
-        rawDataPoint = {409, 915, 1522, 2066, 2523, 2908, 3256, 3572, 3686};
-    }
-
-    bool isConnected() {
-        return wiringPiI2CWrite(fd, 0) >= 0;
-    }
-
-    void setRange(uint8_t range) {
-        this->range = range;
-        if (range == AIRFLOW_RANGE_7_MPS) {
-            mpsDataPoint = {0, 1.07, 2.01, 3.00, 3.97, 4.96, 5.98, 6.99, 7.23};
-            rawDataPoint = {409, 915, 1522, 2066, 2523, 2908, 3256, 3572, 3686};
-        } else if (range == AIRFLOW_RANGE_15_MPS) {
-            mpsDataPoint = {0, 2.00, 3.00, 4.00, 5.00, 6.00, 7.00, 8.00, 9.00, 10.00, 11.00, 13.00, 15.00};
-            rawDataPoint = {409, 1203, 1597, 1908, 2187, 2400, 2629, 2801, 3006, 3178, 3309, 3563, 3686};
-        }
-    }
-
-    uint16_t readRaw() {
-        int data[5];
-        for (int i = 0; i < 5; ++i) {
-            data[i] = wiringPiI2CReadReg8(fd, i);
-        }
-        uint16_t airflowRaw = ((data[1] & 0x0F) << 8) | data[2];
-        return airflowRaw;
-    }
-
-    float readMetersPerSecond() {
-        uint16_t airflowRaw = readRaw();
-        if (airflowRaw <= 409) return 0;
-        if (airflowRaw >= 3686) return range == AIRFLOW_RANGE_7_MPS ? 7.23 : 15.00;
-        int dataPointsNum = range == AIRFLOW_RANGE_7_MPS ? 9 : 13;
-        int dataPosition = 0;
-        for (int i = 0; i < dataPointsNum; ++i) {
-            if (airflowRaw > rawDataPoint[i]) dataPosition = i;
-        }
-        float percentageOfWindow = float(airflowRaw - rawDataPoint[dataPosition]) / float(rawDataPoint[dataPosition + 1] - rawDataPoint[dataPosition]);
-        return mpsDataPoint[dataPosition] + (mpsDataPoint[dataPosition + 1] - mpsDataPoint[dataPosition]) * percentageOfWindow;
-    }
-
-    float readMilesPerHour() {
-        return readMetersPerSecond() * 2.2369362912;
-    }
+    FS3000();
+    bool begin();
+    uint16_t readRaw();
+    float readMetersPerSecond();
+    float readMilesPerHour();
+    void setRange(uint8_t range);
 
 private:
+    void readData(uint8_t* buffer_in);
+    bool checksum(uint8_t* data_in);
     int fd;
-    uint8_t range;
-    std::vector<float> mpsDataPoint;
-    std::vector<int> rawDataPoint;
+    uint8_t _buff[5];
+    uint8_t _range;
+    float _mpsDataPoint[13];
+    int _rawDataPoint[13];
 };
 
+FS3000::FS3000() {}
+
+bool FS3000::begin() {
+    fd = wiringPiI2CSetup(0x28); // Replace with your sensor's I2C address
+    return (fd != -1);
+}
+
+void FS3000::setRange(uint8_t range) {
+    _range = range;
+    const float mpsDataPoint_7_mps[9] = {0, 1.07, 2.01, 3.00, 3.97, 4.96, 5.98, 6.99, 7.23};
+    const int rawDataPoint_7_mps[9] = {409, 915, 1522, 2066, 2523, 2908, 3256, 3572, 3686};
+    const float mpsDataPoint_15_mps[13] = {0, 2.00, 3.00, 4.00, 5.00, 6.00, 7.00, 8.00, 9.00, 10.00, 11.00, 13.00, 15.00};
+    const int rawDataPoint_15_mps[13] = {409, 1203, 1597, 1908, 2187, 2400, 2629, 2801, 3006, 3178, 3309, 3563, 3686};
+
+    if (range == 7) {
+        for (int i = 0; i < 9; i++) {
+            _mpsDataPoint[i] = mpsDataPoint_7_mps[i];
+            _rawDataPoint[i] = rawDataPoint_7_mps[i];
+        }
+    } else if (range == 15) {
+        for (int i = 0; i < 13; i++) {
+            _mpsDataPoint[i] = mpsDataPoint_15_mps[i];
+            _rawDataPoint[i] = rawDataPoint_15_mps[i];
+        }
+    }
+}
+
+uint16_t FS3000::readRaw() {
+    readData(_buff);
+    if (!checksum(_buff)) {
+        return 0;
+    }
+
+    uint16_t airflowRaw = 0;
+    uint8_t data_high_byte = _buff[1];
+    uint8_t data_low_byte = _buff[2];
+    data_high_byte &= 0x0F;
+    airflowRaw = (data_high_byte << 8) | data_low_byte;
+    
+    return airflowRaw;
+}
+
+float FS3000::readMetersPerSecond() {
+    float airflowMps = 0.0;
+    int airflowRaw = readRaw();
+    int dataPointsNum = (_range == 7) ? 9 : 13;
+    int data_position = 0;
+
+    for (int i = 0; i < dataPointsNum; i++) {
+        if (airflowRaw > _rawDataPoint[i]) {
+            data_position = i;
+        }
+    }
+
+    if (airflowRaw <= 409) return 0;
+    if (airflowRaw >= 3686) return (_range == 7) ? 7.23 : 15.00;
+
+    int window_size = (_rawDataPoint[data_position + 1] - _rawDataPoint[data_position]);
+    int diff = (airflowRaw - _rawDataPoint[data_position]);
+    float percentage_of_window = ((float)diff / (float)window_size);
+    float window_size_mps = (_mpsDataPoint[data_position + 1] - _mpsDataPoint[data_position]);
+    
+    airflowMps = _mpsDataPoint[data_position] + (window_size_mps * percentage_of_window);
+    return airflowMps;
+}
+
+float FS3000::readMilesPerHour() {
+    return (readMetersPerSecond() * 2.23694);
+}
+
+void FS3000::readData(uint8_t* buffer_in) {
+    wiringPiI2CWrite(fd, 0x00); // Command to read data, replace with the correct command if necessary
+    for (int i = 0; i < 5; i++) {
+        buffer_in[i] = wiringPiI2CRead(fd);
+    }
+}
+
+bool FS3000::checksum(uint8_t* data_in) {
+    uint8_t sum = 0;
+    for (int i = 1; i <= 4; i++) {
+        sum += data_in[i];
+    }
+    sum %= 256;
+    uint8_t calculated_cksum = (~sum + 1);
+    return (calculated_cksum == data_in[0]);
+}
+
 int main() {
-    int fd = wiringPiI2CSetup(FS3000_DEVICE_ADDRESS);
-    if (fd < 0) {
-        std::cerr << "Failed to initialize I2C communication.\n";
+    FS3000 fs;
+    if (!fs.begin()) {
+        std::cerr << "The sensor did not respond. Please check wiring." << std::endl;
         return -1;
     }
 
-    FS3000 fs3000(fd);
-    if (!fs3000.isConnected()) {
-        std::cerr << "The sensor did not respond. Please check wiring.\n";
-        return -1;
-    }
-
-    fs3000.setRange(AIRFLOW_RANGE_7_MPS);
-    std::cout << "Sensor is connected properly.\n";
+    fs.setRange(7); // Set the range to 7 m/s
 
     while (true) {
-        uint16_t raw = fs3000.readRaw();
-        float mps = fs3000.readMetersPerSecond();
-        float mph = fs3000.readMilesPerHour();
-        std::cout << "FS3000 Readings \tRaw: " << raw << "\tm/s: " << mps << "\tmph: " << mph << "\n";
-        sleep(1);
+        std::cout << "FS3000 Readings \tRaw: " << fs.readRaw()
+                  << "\tm/s: " << fs.readMetersPerSecond()
+                  << "\tmph: " << fs.readMilesPerHour() << std::endl;
+        delay(1000);
     }
 
     return 0;

@@ -30,11 +30,15 @@ class FS3000:
             self.rawDataPoint = [409, 1203, 1597, 1908, 2187, 2400, 2629, 2801, 3006, 3178, 3309, 3563, 3686]
 
     def read_raw(self):
-        data = self.bus.read_i2c_block_data(FS3000_DEVICE_ADDRESS, 0, 5)
-        data_high_byte = data[1] & 0x0F
-        data_low_byte = data[2]
-        airflow_raw = (data_high_byte << 8) | data_low_byte
-        return airflow_raw
+        try:
+            data = self.bus.read_i2c_block_data(FS3000_DEVICE_ADDRESS, 0, 5)
+            data_high_byte = data[1] & 0x0F
+            data_low_byte = data[2]
+            airflow_raw = (data_high_byte << 8) | data_low_byte
+            return airflow_raw
+        except Exception as e:
+            print(f"Failed to read raw data: {e}")
+            return 0
 
     def read_meters_per_second(self):
         airflow_raw = self.read_raw()
