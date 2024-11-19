@@ -17,7 +17,8 @@ class FS3000:
         try:
             self.bus.write_quick(FS3000_DEVICE_ADDRESS)
             return True
-        except:
+        except Exception as e:
+            print(f"Connection check failed: {e}")
             return False
 
     def set_range(self, range):
@@ -31,7 +32,12 @@ class FS3000:
 
     def read_raw(self):
         try:
+            print("Attempting to read data block...")
             data = self.bus.read_i2c_block_data(FS3000_DEVICE_ADDRESS, 0, 5)
+            print(f"Data read: {data}")
+            if not self.verify_checksum(data):
+                print("Checksum error")
+                return 0
             data_high_byte = data[1] & 0x0F
             data_low_byte = data[2]
             airflow_raw = (data_high_byte << 8) | data_low_byte
@@ -39,6 +45,11 @@ class FS3000:
         except Exception as e:
             print(f"Failed to read raw data: {e}")
             return 0
+
+    def verify_checksum(self, data):
+        sum_data = sum(data[1:5]) % 256
+        calculated_cksum = (256 - sum_data) % 256
+        return calculated_cksum == data[0]
 
     def read_meters_per_second(self):
         airflow_raw = self.read_raw()
