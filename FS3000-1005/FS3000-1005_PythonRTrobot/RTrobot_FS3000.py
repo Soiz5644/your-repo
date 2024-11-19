@@ -1,15 +1,19 @@
 #!/usr/bin/env python3
 
-# RTrobot FS3000 Test
-# http://rtrobot.org
-
 import fcntl
+print("fcntl is working")
 import array
+a = array.array('i', [1, 2, 3])
+print("array is working:", a)
 import RPi.GPIO as GPIO
+GPIO.setmode(GPIO.BCM)
+print("RPi.GPIO is working")
+GPIO.cleanup()
 import numpy as np
+a = np.array([1, 2, 3])
+print("numpy is working:", a)
 
 I2C_SLAVE = 0x0703
-
 
 class RTrobot_FS3000:
     FS3000_ADDRESS = (0x28)
@@ -29,25 +33,38 @@ class RTrobot_FS3000:
         adc_table = (409, 1203, 1597, 1908, 2187,
                          2400, 2629, 2801, 3006, 3178, 3309, 3563, 3686)
         fm_raw = self.FS3000_i2c_read()
+        print(f"Raw data read: {fm_raw}")
         fm_level = 0
         fm_percentage = 0
         if fm_raw < adc_table[0] or fm_raw > adc_table[12]:
             return 0
         for i in range(13):
             if fm_raw > adc_table[i]:
-                fm_level=i
+                fm_level = i
         fm_percentage = (fm_raw - adc_table[fm_level]) / (adc_table[fm_level + 1] - adc_table[fm_level])
         return (air_velocity_table[fm_level + 1] - air_velocity_table[fm_level]) * fm_percentage + air_velocity_table[fm_level]
 
-    ######################################i2C######################################
-
     def FS3000_i2c_read(self, delays=0.015):
         tmp = FS3000_rb.read(5)
+        print(f"Raw I2C data: {list(tmp)}")  # Print raw data bytes
         data = array.array('B', tmp)
-        sum = 0x00
-        for i in range(0, 5):
+
+        # Calculate 256-modulo sum of the last 4 bytes
+        sum = 0
+        for i in range(1, 5):
             sum += data[i]
-        if sum & 0xff != 0x00:
+        sum = sum & 0xFF  # Ensure it's 8-bit
+
+        # Calculate 2's complement (negative) of the sum
+        calculated_checksum = ((256 - sum) & 0xFF)
+        print(f"Calculated checksum: {calculated_checksum}, Received checksum: {data[0]}")
+
+        if calculated_checksum != data[0]:
+            print("Checksum error in data read")
             return 0x00
         else:
-            return (data[1] * 256 + data[2]) & 0xfff
+            return (data[1] * 256 + data[2]) & 0xFFF
+
+# Ensure GPIO cleanup is at the end of the program
+GPIO.cleanup()
+print("Script terminated by user.")

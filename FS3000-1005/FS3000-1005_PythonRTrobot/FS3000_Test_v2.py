@@ -19,7 +19,7 @@ try:
         print(f"Data read: {speed}")
         if speed != 0:
             print(f"{speed} m/s")
-        time.sleep(1)
+        time.sleep(1)  # 1 second delay
 
 except KeyboardInterrupt:
     pass
