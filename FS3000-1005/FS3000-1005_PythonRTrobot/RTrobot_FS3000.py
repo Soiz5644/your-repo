@@ -26,6 +26,7 @@ class RTrobot_FS3000:
         print("Thanks for using RTrobot module")
         fcntl.ioctl(FS3000_rb, I2C_SLAVE, i2c_addr)
         fcntl.ioctl(FS3000_wb, I2C_SLAVE, i2c_addr)
+        print("I2C interface initialized successfully")
 
     def FS3000_ReadData(self):
         air_velocity_table = (0, 2.0, 3.0, 4.0, 5.0,
@@ -67,4 +68,5 @@ class RTrobot_FS3000:
 
 # Ensure GPIO cleanup is at the end of the program
 GPIO.cleanup()
+print("GPIO cleanup completed")
 print("Script terminated by user.")
