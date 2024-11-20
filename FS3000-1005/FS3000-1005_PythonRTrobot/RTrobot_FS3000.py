@@ -29,17 +29,15 @@ class RTrobot_FS3000:
         print("I2C interface initialized successfully")
 
     def FS3000_ReadData(self):
-        air_velocity_table = (0, 2.0, 3.0, 4.0, 5.0,
-                                  6.0, 7.0, 8.0, 9.0, 10.0, 11.0, 13.0, 15.0)
-        adc_table = (409, 1203, 1597, 1908, 2187,
-                         2400, 2629, 2801, 3006, 3178, 3309, 3563, 3686)
+        air_velocity_table = (0, 1.07, 2.01, 3.00, 3.97, 4.96, 5.98, 6.99, 7.23)
+        adc_table = (409, 915, 1522, 2066, 2523, 2908, 3256, 3572, 3686)
         fm_raw = self.FS3000_i2c_read()
         print(f"Raw data read: {fm_raw}")
         fm_level = 0
         fm_percentage = 0
-        if fm_raw < adc_table[0] or fm_raw > adc_table[12]:
+        if fm_raw < adc_table[0] or fm_raw > adc_table[8]:
             return 0
-        for i in range(13):
+        for i in range(8):
             if fm_raw > adc_table[i]:
                 fm_level = i
         fm_percentage = (fm_raw - adc_table[fm_level]) / (adc_table[fm_level + 1] - adc_table[fm_level])
