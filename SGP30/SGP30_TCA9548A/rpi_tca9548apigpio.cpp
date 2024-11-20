@@ -1,5 +1,5 @@
 #include <pigpio.h>
-#include "rpi_tca9548apigpiopigpio.h"
+#include "rpi_tca9548apigpio.h"
 #include <iostream>
 
 // Constructor
@@ -21,8 +21,8 @@ int rpi_tca9548apigpio::init(int address) {
 }
 
 // Set the active channel on the TCA9548A
-int rpi_tca9548apigpio::set_channel(int channel) {
-    if (i2c_write_byte(i2c_handle, 1 << channel) < 0) {
+int rpi_tca9548apigpio::set_channel(uint8_t channel) {
+    if (i2cWriteByte(i2c_handle, 1 << channel) < 0) {
         std::cerr << "Failed to set channel" << std::endl;
         return -1;
     }

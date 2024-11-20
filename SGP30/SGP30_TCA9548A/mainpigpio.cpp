@@ -1,18 +1,37 @@
 #include "rpi_tca9548apigpio.h"
-#include "sgp30_i2c.h"    // We need to create this based on seeed_sgp30.py
+#include "sgp30_i2c.h"
 #include "sensirion_i2c_hal.h"
 #include <iostream>
 #include <thread>
 #include <chrono>
+#include <pigpio.h>
+#include <csignal>
+
+volatile sig_atomic_t stop = 0;
+
+void handle_sigint(int signum) {
+    std::cout << "SIGINT received, terminating..." << std::endl;
+    stop = 1;
+}
 
 int main() {
+    // Register signal handler
+    std::signal(SIGINT, handle_sigint);
+
+    // Initialize Pigpio
+    if (gpioInitialise() < 0) {
+        std::cerr << "Pigpio initialization failed" << std::endl;
+        return -1;
+    }
+
     // Initialize I2C HAL
     sensirion_i2c_hal_init();
 
     // Initialize TCA9548A at the default I2C address (0x70)
-    rpi_tca9548a tca9548a;
+    rpi_tca9548apigpio tca9548a;
     if (tca9548a.init(0x70) != 0) {
         std::cerr << "Failed to initialize TCA9548A" << std::endl;
+        gpioTerminate();
         return -1;
     }
 
@@ -22,10 +41,11 @@ int main() {
     // Initialize SGP30
     if (sgp30_init() != 0) {
         std::cerr << "Failed to initialize SGP30" << std::endl;
+        gpioTerminate();
         return -1;
     }
 
-    while (true) {
+    while (!stop) {
         uint16_t co2_eq_ppm, tvoc_ppb;
         if (sgp30_read_measurements(&co2_eq_ppm, &tvoc_ppb) != 0) {
             std::cerr << "Error reading SGP30 measurements" << std::endl;
@@ -37,5 +57,7 @@ int main() {
         std::this_thread::sleep_for(std::chrono::seconds(1));
     }
 
+    gpioTerminate();
+    std::cout << "Terminated gracefully" << std::endl;
     return 0;
 }
