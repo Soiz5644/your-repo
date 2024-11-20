@@ -1,4 +1,4 @@
-#include "rpi_tca9548a.h"
+#include "rpi_tca9548apigpio.h"
 #include "sgp30_i2c.h"    // We need to create this based on seeed_sgp30.py
 #include "sensirion_i2c_hal.h"
 #include <iostream>
