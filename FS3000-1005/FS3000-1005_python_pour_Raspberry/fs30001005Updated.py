@@ -52,7 +52,8 @@ fs = RTrobot_FS3000(device=RTrobot_FS3000.FS3000_1005)
 try:
     while True:
         speed = fs.FS3000_ReadData()
-        print(str(speed) + " m/s")
+        if speed != 0:
+            print(str(speed) + " m/s")
         time.sleep(1)  # Measure and print data at a frequency of 1 measurement per second
 
 except KeyboardInterrupt:
