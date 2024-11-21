@@ -3,16 +3,16 @@
 # RTrobot FS3000 Sensor Test
 # http://rtrobot.org
 
-import RTrobot_FS3000
+from RTrobot_FS3000 import RTrobot_FS3000
 import sys
 import time
 import RPi.GPIO as GPIO
 
-tmf = RTrobot_FS3000.RTrobot_FS3000()
+fs = RTrobot_FS3000(device=RTrobot_FS3000.FS3000_1005)
 
 try:
     while True:
-        speed = tmf.FS3000_ReadData()
+        speed = fs.FS3000_ReadData()
         if speed != 0:
             print(str(speed)+" m/s")
         time.sleep(0.1)

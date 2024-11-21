@@ -1,19 +1,31 @@
 import pigpio
 import time
+import fcntl
+import array
 
 FS3000_ADDRESS = 0x28
 ORIGINAL_BAUDRATE = 100000  # Original baudrate (100kHz)
 TEST_BAUDRATE = 400000      # Test baudrate (400kHz)
 
 class FS3000:
-    def __init__(self, pi, bus=1):
+    fs3000_1005_air_velocity_table = (0, 1.07, 2.01, 3.0, 3.97, 4.96, 5.98, 6.99, 7.23)
+    fs3000_1005_adc_table = (409, 915, 1522, 2066, 2523, 2908, 3256, 3572, 3686)
+
+    def __init__(self, pi, bus=1, device=0x00):
         self.pi = pi
         self.bus = bus
+        self.device = device
         self.handle = self.pi.i2c_open(self.bus, FS3000_ADDRESS)
+        self.rb = open(f"/dev/i2c-{bus}", "rb", buffering=0)
+        self.wb = open(f"/dev/i2c-{bus}", "wb", buffering=0)
+        fcntl.ioctl(self.rb, I2C_SLAVE, FS3000_ADDRESS)
+        fcntl.ioctl(self.wb, I2C_SLAVE, FS3000_ADDRESS)
 
     def __del__(self):
         if self.handle is not None:
             self.pi.i2c_close(self.handle)
+        self.rb.close()
+        self.wb.close()
 
     def set_baudrate(self, baudrate):
         self.pi.set_baudrate(self.handle, baudrate)
@@ -31,26 +43,16 @@ class FS3000:
     def read_raw(self):
         try:
             self.set_baudrate(TEST_BAUDRATE)
-            count, data = self.pi.i2c_read_device(self.handle, 5)
+            tmp = self.rb.read(5)
             self.set_baudrate(ORIGINAL_BAUDRATE)
-            if count == 5:
-                print(f"Raw data read: {data}")
-                checksum = data[0]
-                high = data[1]
-                low = data[2]
-                received_checksum = data[3]
-                extra = data[4]
-
-                # Calculate checksum
-                calculated_checksum = (256 - ((high + low + received_checksum + extra) & 0xFF)) & 0xFF
-                if checksum != calculated_checksum:
-                    print(f"Checksum mismatch: expected {checksum}, got {calculated_checksum}")
-                    return None
-
-                return (high << 8) | low
+            data = array.array('B', tmp)
+            sum = 0x00
+            for i in range(0, 5):
+                sum += data[i]
+            if sum & 0xff != 0x00:
+                return 0x00
             else:
-                print(f"Unexpected data length: {count}")
-                return None
+                return (data[1] * 256 + data[2]) & 0xfff
         except Exception as e:
             print(f"Read raw data failed: {e}")
             return None
@@ -58,16 +60,14 @@ class FS3000:
     def read_meters_per_second(self):
         raw = self.read_raw()
         if raw is not None:
-            return raw * 7.23 / 4095  # Assuming 0-7.23 m/s range
-        else:
-            return None
-
-    def read_miles_per_hour(self):
-        mps = self.read_meters_per_second()
-        if mps is not None:
-            return mps * 2.2369362912
-        else:
-            return None
+            if raw < self.fs3000_1005_adc_table[0] or raw > self.fs3000_1005_adc_table[8]:
+                return 0
+            for i in range(8):
+                if raw > self.fs3000_1005_adc_table[i]:
+                    level = i
+            percentage = (raw - self.fs3000_1005_adc_table[level]) / (self.fs3000_1005_adc_table[level + 1] - self.fs3000_1005_adc_table[level])
+            return (self.fs3000_1005_air_velocity_table[level + 1] - self.fs3000_1005_air_velocity_table[level]) * percentage + self.fs3000_1005_air_velocity_table[level]
+        return None
 
 if __name__ == "__main__":
     pi = pigpio.pi()
