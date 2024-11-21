@@ -93,6 +93,7 @@ private:
     int FS3000_i2c_read() {
         unsigned char buffer[5];
         int length = 5;
+        usleep(15000);  // Add delay before reading
         if (read(file_i2c, buffer, length) != length) {
             std::cerr << "Failed to read from the i2c bus. Error: " << strerror(errno) << std::endl;
             return -1;
