@@ -124,7 +124,7 @@ int main() {
     std::cout << "Initializing SGP30 on channel 2..." << std::endl;
     tca9548a.set_channel(2);
     SGP30 sgp30;
-    if (sgp30_init() != 0) {
+    if (sgp30.init() != 0) {
         std::cerr << "Failed to initialize SGP30" << std::endl;
         return -1;
     }
