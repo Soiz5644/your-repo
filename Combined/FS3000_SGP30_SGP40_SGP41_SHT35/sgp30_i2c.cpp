@@ -1,20 +1,21 @@
 #include "sgp30_i2c.h"
 #include "sensirion_i2c_hal.h"
 #include <unistd.h> // for usleep
+#include <math.h> // for exp()
 
 #define SGP30_I2C_ADDRESS 0x58
 
-int sgp30_init() {
-    // Initialization commands for SGP30
-    // (Example: send command 0x2003)
+SGP30::SGP30() : srefH2(13119), srefEthanol(18472) {}
+
+int SGP30::init() {
     uint8_t init_cmd[2] = {0x20, 0x03};
     return sensirion_i2c_hal_write(SGP30_I2C_ADDRESS, init_cmd, sizeof(init_cmd));
 }
 
-int sgp30_read_measurements(uint16_t *co2_eq_ppm, uint16_t *tvoc_ppb) {
+int SGP30::measure() {
     uint8_t read_cmd[2] = {0x20, 0x08}; // Example command
     uint8_t data[6];
-    
+
     if (sensirion_i2c_hal_write(SGP30_I2C_ADDRESS, read_cmd, sizeof(read_cmd)) != 0) {
         return -1;
     }
@@ -24,15 +25,53 @@ int sgp30_read_measurements(uint16_t *co2_eq_ppm, uint16_t *tvoc_ppb) {
         return -1;
     }
 
-    *co2_eq_ppm = (data[0] << 8) | data[1];
-    *tvoc_ppb = (data[3] << 8) | data[4];
+    co2_eq_ppm = (data[0] << 8) | data[1];
+    tvoc_ppb = (data[3] << 8) | data[4];
 
     return 0;
 }
 
-	int sgp30_read_sraw(uint16_t *sraw) {
-    // Code to read SRAW data
-    // Example, replace with the actual implementation
-    int16_t error = sensirion_i2c_read_cmd(0x2050, sraw, sizeof(uint16_t));
-    return error;
+int SGP30::readRaw() {
+    uint8_t read_cmd[2] = {0x20, 0x50}; // Raw data command
+    uint8_t data[6];
+
+    if (sensirion_i2c_hal_write(SGP30_I2C_ADDRESS, read_cmd, sizeof(read_cmd)) != 0) {
+        return -1;
+    }
+    usleep(25000); // Wait for 25ms
+
+    if (sensirion_i2c_hal_read(SGP30_I2C_ADDRESS, data, sizeof(data)) != 0) {
+        return -1;
+    }
+
+    h2_raw = (data[0] << 8) | data[1];
+    ethanol_raw = (data[3] << 8) | data[4];
+
+    return 0;
+}
+
+uint16_t SGP30::getTVOC() {
+    return tvoc_ppb;
+}
+
+uint16_t SGP30::getCO2() {
+    return co2_eq_ppm;
+}
+
+uint16_t SGP30::getH2_raw() {
+    return h2_raw;
+}
+
+uint16_t SGP30::getEthanol_raw() {
+    return ethanol_raw;
+}
+
+float SGP30::getH2() {
+    float cref = 0.5;  // ppm
+    return cref * exp((srefH2 - h2_raw) * 1.953125e-3);
+}
+
+float SGP30::getEthanol() {
+    float cref = 0.4;  // ppm
+    return cref * exp((srefEthanol - ethanol_raw) * 1.953125e-3);
 }

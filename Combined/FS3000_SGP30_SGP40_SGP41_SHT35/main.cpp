@@ -123,6 +123,7 @@ int main() {
     // Initialize SGP30 on channel 2
     std::cout << "Initializing SGP30 on channel 2..." << std::endl;
     tca9548a.set_channel(2);
+    SGP30 sgp30;
     if (sgp30_init() != 0) {
         std::cerr << "Failed to initialize SGP30" << std::endl;
         return -1;
@@ -195,13 +196,13 @@ int main() {
     
     // Write header if file is created new
     if (!file_exists_flag) {
-        data_file << "Timestamp,SGP30_tVOC_ppb,SGP30_CO2eq_ppm,SGP30_SRAW,SGP40_SRAW_VOC,SGP41_SRAW_VOC,SGP41_SRAW_NOX,sgp40_voc_index,sgp41_voc_index,Temperature_C,Humidity_%,FS3000_Velocity_m/s" << std::endl;
+        data_file << "Timestamp,SGP30_tVOC_ppb,SGP30_CO2eq_ppm,SGP30_H2_raw,SGP30_Ethanol_raw,SGP30_H2,SGP30_Ethanol,SGP40_SRAW_VOC,SGP41_SRAW_VOC,SGP41_SRAW_NOX,sgp40_voc_index,sgp41_voc_index,Temperature_C,Humidity_%,FS3000_Velocity_m/s" << std::endl;
     }
 
     // Measure temperature and humidity from SHT35, and raw signals from SGP30, SGP40, SGP41, and FS3000 in an infinite loop
     float temperature = 0.0;
     float humidity = 0.0;
-    uint16_t co2_eq_ppm, tvoc_ppb, sgp30_sraw;
+    uint16_t co2_eq_ppm, tvoc_ppb;
     uint16_t sgp40_sraw_voc;
 
     while (true) {
@@ -209,12 +210,8 @@ int main() {
 
         // Measure from SGP30
         tca9548a.set_channel(2);
-        if (sgp30_read_measurements(&co2_eq_ppm, &tvoc_ppb) != 0) {
+        if (sgp30.measure()) {
             std::cerr << "Error reading SGP30 measurements" << std::endl;
-        }
-        // Assuming SGP30 has a function to read SRAW data, if not you need to implement it
-        if (sgp30_read_sraw(&sgp30_sraw) != 0) {
-            std::cerr << "Error reading SGP30 SRAW data" << std::endl;
         }
 
         // Measure from SGP40
@@ -246,7 +243,7 @@ int main() {
 
         // Write data to CSV file
         data_file << timestamp << ","
-                  << tvoc_ppb << "," << co2_eq_ppm << "," << sgp30_sraw << ","
+                  << sgp30.getTVOC() << "," << sgp30.getCO2() << "," << sgp30.getH2_raw() << "," << sgp30.getEthanol_raw() << "," << sgp30.getH2() << "," << sgp30.getEthanol() << ","
                   << sgp40_sraw_voc << "," << sraw_voc << "," << sraw_nox << ","
                   << sgp40_voc_index << "," << sgp41_voc_index << ","
                   << temperature << "," << humidity << ","
