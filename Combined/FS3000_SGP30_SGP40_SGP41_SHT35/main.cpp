@@ -13,6 +13,8 @@
 #include <sys/stat.h>
 #include <unistd.h>
 #include <cstring>
+#include <wiringPi.h>
+#include <wiringPiI2C.h>
 
 // Include FS3000 header
 #define FS3000_ADDRESS 0x28

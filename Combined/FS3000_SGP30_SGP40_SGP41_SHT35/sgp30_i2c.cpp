@@ -29,3 +29,10 @@ int sgp30_read_measurements(uint16_t *co2_eq_ppm, uint16_t *tvoc_ppb) {
 
     return 0;
 }
+
+	int sgp30_read_sraw(uint16_t *sraw) {
+    // Code to read SRAW data
+    // Example, replace with the actual implementation
+    int16_t error = sensirion_i2c_read_cmd(0x2050, sraw, sizeof(uint16_t));
+    return error;
+}
