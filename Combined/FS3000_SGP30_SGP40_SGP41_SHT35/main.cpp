@@ -239,7 +239,7 @@ int main() {
         // Measure from FS3000
         tca9548a.set_channel(7);
         float fs3000_velocity = fs3000.FS3000_ReadData();
-        std::cout << "FS3000 Air Velocity: " << fs3000_velocity << " m/s" << std::endl;
+        //std::cout << "FS3000 Air Velocity: " << fs3000_velocity << " m/s" << std::endl;
 
         // Write data to CSV file
         data_file << timestamp << ","
