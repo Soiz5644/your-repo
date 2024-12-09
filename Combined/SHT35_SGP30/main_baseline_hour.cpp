@@ -58,11 +58,8 @@ void write_baseline(uint16_t co2, uint16_t tvoc) {
 
 int main() {
     log_debug_info("Program started.");
-    if (sensirion_i2c_hal_init() != 0) {
-        std::cerr << "Failed to initialize I2C HAL" << std::endl;
-        log_debug_info("Failed to initialize I2C HAL.");
-        return -1;
-    }
+    // Initialize I2C HAL
+    sensirion_i2c_hal_init();
 
     rpi_tca9548a tca9548a;
     if (tca9548a.init(0x70) != 0) {
