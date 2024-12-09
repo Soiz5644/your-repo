@@ -51,8 +51,8 @@ def write_to_csv(timestamp, value, moisture_percent):
             writer = csv.writer(file)
             if not file_exists:
                 writer.writerow(["Time", "Raw value", "Moisture (%)"])  # Write header only if the file doesn't exist
-            writer.writerow([timestamp, value, moisture_percent])
-        print(f"Data saved to {CSV_FILE}: {timestamp}, {value}, {moisture_percent}%")
+            writer.writerow([timestamp, value, f"{moisture_percent:.2f}"])
+        print(f"Data saved to {CSV_FILE}: {timestamp}, {value}, {moisture_percent:.2f}%")
     except Exception as e:
         print(f"Error writing to CSV file: {e}")
 
@@ -63,7 +63,7 @@ if SENSOR_MIN is not None and SENSOR_MAX is not None:
     print(f"Calibration data loaded: Min={SENSOR_MIN}, Max={SENSOR_MAX}")
     calibrating = False  # Skip calibration if data exists
 else:
-    print("No valid calibration data found. Starting calibration.")
+    print("No valid calibration data found. Stating calibration.")
     calibrating = True
 
 print("============= Starting sensor readings =============")
@@ -89,9 +89,9 @@ while True:
         else:
             # Convert the value to a percentage
             if SENSOR_MIN is not None and SENSOR_MAX is not None:
-                percent = round(((value - SENSOR_MAX) / (SENSOR_MIN - SENSOR_MAX)) * 100)
-                percent = max(0, min(100, percent))  # Clamp between 0 and 100
-                print(f"Moisture: {percent}%")
+                percent = ((value - SENSOR_MAX) / (SENSOR_MIN - SENSOR_MAX)) * 100
+                percent = max(0.00, min(100.00, percent))  # Clamp between 0 and 100
+                print(f"Moisture: {percent:.2f}%")
 
                 # Get current time
                 timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
