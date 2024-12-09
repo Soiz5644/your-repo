@@ -9,7 +9,7 @@
 #include <ctime>   // for std::time_t, std::tm, std::localtime, std::strftime
 
 #define BASELINE_FILE "sgp30_baseline.txt"
-#define HOURS_TO_RUN 0.2667
+#define MINUTES_TO_RUN 16
 #define DEBUG_FILE "debug_log.txt"
 
 // Function to log debug information
@@ -56,7 +56,11 @@ void write_baseline(uint16_t co2, uint16_t tvoc) {
 
 int main() {
     log_debug_info("Program started.");
-    sensirion_i2c_hal_init();
+    if (sensirion_i2c_hal_init() != 0) {
+        std::cerr << "Failed to initialize I2C HAL" << std::endl;
+        log_debug_info("Failed to initialize I2C HAL.");
+        return -1;
+    }
 
     rpi_tca9548a tca9548a;
     if (tca9548a.init(0x70) != 0) {
@@ -65,7 +69,11 @@ int main() {
         return -1;
     }
 
-    tca9548a.set_channel(2);
+    if (tca9548a.set_channel(2) != 0) {
+        std::cerr << "Failed to set TCA9548A channel" << std::endl;
+        log_debug_info("Failed to set TCA9548A channel.");
+        return -1;
+    }
 
     if (sgp30_init() != 0) {
         std::cerr << "Failed to initialize SGP30" << std::endl;
@@ -81,13 +89,17 @@ int main() {
         write_baseline(co2_baseline, tvoc_baseline);
         log_debug_info("Baseline initialized: CO2 = " + std::to_string(co2_baseline) + ", TVOC = " + std::to_string(tvoc_baseline));
     } else {
-        sgp30_set_baseline(co2_baseline, tvoc_baseline);
+        if (sgp30_set_baseline(co2_baseline, tvoc_baseline) != 0) {
+            std::cerr << "Failed to set SGP30 baseline" << std::endl;
+            log_debug_info("Failed to set SGP30 baseline.");
+            return -1;
+        }
     }
 
     auto last_baseline_time = std::chrono::steady_clock::now();
     int minutes_elapsed = 0;
 
-    while (minutes_elapsed < HOURS_TO_RUN * 60) { // Change to minutes for testing
+    while (minutes_elapsed < MINUTES_TO_RUN) {
         uint16_t co2_eq_ppm, tvoc_ppb;
         if (sgp30_read_measurements(&co2_eq_ppm, &tvoc_ppb) != 0) {
             std::cerr << "Error reading SGP30 measurements" << std::endl;
@@ -98,7 +110,7 @@ int main() {
         }
 
         auto now = std::chrono::steady_clock::now();
-        if (std::chrono::duration_cast<std::chrono::minutes>(now - last_baseline_time).count() >= 1) { // Change to minutes for testing
+        if (std::chrono::duration_cast<std::chrono::minutes>(now - last_baseline_time).count() >= 1) {
             uint16_t co2, tvoc;
             if (sgp30_get_baseline(&co2, &tvoc) == 0) {
                 write_baseline(co2, tvoc);
@@ -113,8 +125,8 @@ int main() {
         std::this_thread::sleep_for(std::chrono::seconds(1));
     }
 
-    std::cout << "16 hours elapsed. Shutting down the system." << std::endl;
-    log_debug_info("16 hours elapsed. Shutting down the system.");
+    std::cout << "16 minutes elapsed. Shutting down the system." << std::endl;
+    log_debug_info("16 minutes elapsed. Shutting down the system.");
     system("sudo shutdown -h now");
 
     return 0;
