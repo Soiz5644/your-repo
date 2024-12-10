@@ -16,6 +16,8 @@
 #include <wiringPi.h>
 #include <wiringPiI2C.h>
 
+#define NO_ERROR 0  // Define NO_ERROR as 0
+
 // Include FS3000 header
 #define FS3000_ADDRESS 0x28
 #define FS3000_1005 0x00
@@ -91,8 +93,6 @@ int RTrobot_FS3000::FS3000_i2c_read() {
         }
     }
 }
-
-#define NO_ERROR 0  // Define NO_ERROR as 0
 
 std::string get_current_time() {
     auto now = std::chrono::system_clock::now();
@@ -196,7 +196,7 @@ int main() {
     
     // Write header if file is created new
     if (!file_exists_flag) {
-        data_file << "Timestamp,SGP30_tVOC_ppb,SGP30_CO2eq_ppm,SGP30_H2_raw,SGP30_Ethanol_raw,SGP30_H2,SGP30_Ethanol,SGP40_SRAW_VOC,SGP41_SRAW_VOC,SGP41_SRAW_NOX,sgp40_voc_index,sgp41_voc_index,Temperature_C,Humidity_%,FS3000_Velocity_m/s" << std::endl;
+        data_file << "Timestamp,SGP30_tVOC_ppb,SGP30_CO2eq_ppm,SGP30_H2_raw,SGP30_Ethanol_raw,SGP30_H2,SGP30_Ethanol,SGP40_SRAW_VOC,SGP41_SRAW_VOC,SGP41_SRAW_NOX,sgp40_voc_index,sgp41_voc_index,Temperature,Humidity,FS3000_Air_Velocity" << std::endl;
     }
 
     // Measure temperature and humidity from SHT35, and raw signals from SGP30, SGP40, SGP41, and FS3000 in an infinite loop
@@ -208,11 +208,22 @@ int main() {
     while (true) {
         std::string timestamp = get_current_time();
 
-        // Measure from SGP30
+        // Measure temperature and humidity from SHT35
+        tca9548a.set_channel(3);
+        if (sht3x_measure_single_shot(REPEATABILITY_MEDIUM, false, &temperature, &humidity) != NO_ERROR) {
+            std::cerr << "Error measuring SHT35" << std::endl;
+        }
+
+        // Set the relative humidity for SGP30
         tca9548a.set_channel(2);
+        sgp30.set_relative_humidity(temperature, humidity);
+
+        // Measure from SGP30
         if (sgp30.measure()) {
             std::cerr << "Error reading SGP30 measurements" << std::endl;
         }
+        co2_eq_ppm = sgp30.getCO2();
+        tvoc_ppb = sgp30.getTVOC();
 
         // Measure from SGP40
         tca9548a.set_channel(0);
@@ -230,20 +241,13 @@ int main() {
         int32_t sgp41_voc_index;
         GasIndexAlgorithm_process(&sgp41_voc_params, sraw_voc, &sgp41_voc_index);
 
-        // Measure from SHT35
-        tca9548a.set_channel(3);
-        if (sht3x_measure_single_shot(REPEATABILITY_MEDIUM, false, &temperature, &humidity) != NO_ERROR) {
-            std::cerr << "Error measuring SHT35" << std::endl;
-        }
-
         // Measure from FS3000
         tca9548a.set_channel(7);
         float fs3000_velocity = fs3000.FS3000_ReadData();
-        //std::cout << "FS3000 Air Velocity: " << fs3000_velocity << " m/s" << std::endl;
 
         // Write data to CSV file
         data_file << timestamp << ","
-                  << sgp30.getTVOC() << "," << sgp30.getCO2() << "," << sgp30.getH2_raw() << "," << sgp30.getEthanol_raw() << "," << sgp30.getH2() << "," << sgp30.getEthanol() << ","
+                  << tvoc_ppb << "," << co2_eq_ppm << "," << sgp30.getH2_raw() << "," << sgp30.getEthanol_raw() << "," << sgp30.getH2() << "," << sgp30.getEthanol() << ","
                   << sgp40_sraw_voc << "," << sraw_voc << "," << sraw_nox << ","
                   << sgp40_voc_index << "," << sgp41_voc_index << ","
                   << temperature << "," << humidity << ","
