@@ -1,8 +1,9 @@
 #include "sgp30_i2c.h"
 #include "sensirion_i2c_hal.h"
-#include "sensirion_common.h" // Add this line
+#include "sensirion_common.h"
 #include <unistd.h> // for usleep
 #include <math.h> // for exp()
+#include <stdint.h> // for uint8_t, uint16_t
 
 #define SGP30_I2C_ADDRESS 0x58
 
@@ -14,7 +15,7 @@ int SGP30::init() {
 }
 
 int SGP30::measure() {
-    uint8_t read_cmd[2] = {0x20, 0x08}; // Example command
+    uint8_t read_cmd[2] = {0x20, 0x08};
     uint8_t data[6];
 
     if (sensirion_i2c_hal_write(SGP30_I2C_ADDRESS, read_cmd, sizeof(read_cmd)) != 0) {
@@ -33,7 +34,7 @@ int SGP30::measure() {
 }
 
 int SGP30::readRaw() {
-    uint8_t read_cmd[2] = {0x20, 0x50}; // Raw data command
+    uint8_t read_cmd[2] = {0x20, 0x50};
     uint8_t data[6];
 
     if (sensirion_i2c_hal_write(SGP30_I2C_ADDRESS, read_cmd, sizeof(read_cmd)) != 0) {
@@ -77,9 +78,24 @@ float SGP30::getEthanol() {
     return cref * exp((srefEthanol - ethanol_raw) * 1.953125e-3);
 }
 
+uint8_t generate_crc(const uint8_t* data, uint16_t count) {
+    uint8_t crc = 0xFF;
+    for (uint16_t i = 0; i < count; ++i) {
+        crc ^= data[i];
+        for (uint8_t bit = 8; bit > 0; --bit) {
+            if (crc & 0x80) {
+                crc = (crc << 1) ^ 0x31;
+            } else {
+                crc = (crc << 1);
+            }
+        }
+    }
+    return crc;
+}
+
 int SGP30::set_absolute_humidity(float absoluteHumidity) {
     uint16_t AH = (uint16_t)(absoluteHumidity * 256.0);
-    uint8_t ah_cmd[5] = {0x20, 0x61, (uint8_t)(AH >> 8), (uint8_t)(AH & 0xFF), sensirion_common_generate_crc((uint8_t*)&AH, 2)};
+    uint8_t ah_cmd[5] = {0x20, 0x61, (uint8_t)(AH >> 8), (uint8_t)(AH & 0xFF), generate_crc((uint8_t*)&AH, 2)};
     return sensirion_i2c_hal_write(SGP30_I2C_ADDRESS, ah_cmd, sizeof(ah_cmd));
 }
 
