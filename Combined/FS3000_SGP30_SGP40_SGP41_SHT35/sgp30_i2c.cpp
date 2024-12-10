@@ -75,3 +75,15 @@ float SGP30::getEthanol() {
     float cref = 0.4;  // ppm
     return cref * exp((srefEthanol - ethanol_raw) * 1.953125e-3);
 }
+
+int SGP30::set_absolute_humidity(float absoluteHumidity) {
+    uint16_t AH = (uint16_t)(absoluteHumidity * 256.0);
+    uint8_t ah_cmd[5] = {0x20, 0x61, (uint8_t)(AH >> 8), (uint8_t)(AH & 0xFF), sensirion_common_generate_crc((uint8_t*)&AH, 2)};
+    return sensirion_i2c_hal_write(SGP30_I2C_ADDRESS, ah_cmd, sizeof(ah_cmd));
+}
+
+int SGP30::set_relative_humidity(float T, float RH) {
+    // Calculate absolute humidity based on temperature and relative humidity
+    float absoluteHumidity = (2.167 * 6.112) * RH * exp((17.62 * T) / (243.12 + T)) / (273.15 + T);
+    return set_absolute_humidity(absoluteHumidity);
+}
