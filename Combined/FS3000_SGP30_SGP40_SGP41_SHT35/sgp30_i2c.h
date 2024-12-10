@@ -1,6 +1,9 @@
 #ifndef SGP30_I2C_H
 #define SGP30_I2C_H
 
+#include <stdint.h> // Include for uint16_t
+#include "sensirion_common.h" // Include for sensirion_common_generate_crc
+
 class SGP30 {
 public:
     SGP30();
