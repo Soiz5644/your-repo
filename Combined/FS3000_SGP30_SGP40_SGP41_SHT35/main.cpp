@@ -196,13 +196,13 @@ int main() {
     
     // Write header if file is created new
     if (!file_exists_flag) {
-        data_file << "Timestamp,SGP30_tVOC_ppb,SGP30_CO2eq_ppm,SGP30_H2_raw,SGP30_Ethanol_raw,SGP30_H2,SGP30_Ethanol,SGP40_SRAW_VOC,SGP41_SRAW_VOC,SGP41_SRAW_NOX,sgp40_voc_index,sgp41_voc_index,Temperature,Humidity,FS3000_Air_Velocity,SGP40_SRAW_VOC_wo,SGP41_SRAW_VOC_wo,SGP41_SRAW_NOX_wo" << std::endl;
+        data_file << "Timestamp,SGP30_tVOC_ppb,SGP30_CO2eq_ppm,SGP30_H2_raw,SGP30_Ethanol_raw,SGP30_H2,SGP30_Ethanol,SGP40_SRAW_VOC,SGP41_SRAW_VOC,SGP41_SRAW_NOX,sgp40_voc_index,sgp41_voc_index,Temperature,Humidity,FS3000_Air_Velocity,SGP30_tVOC_ppb_wo,SGP30_CO2eq_ppm_wo,SGP30_H2_raw_wo,SGP30_Ethanol_raw_wo,SGP40_SRAW_VOC_wo,SGP41_SRAW_VOC_wo,SGP41_SRAW_NOX_wo" << std::endl;
     }
 
     // Measure temperature and humidity from SHT35, and raw signals from SGP30, SGP40, SGP41, and FS3000 in an infinite loop
     float temperature = 0.0;
     float humidity = 0.0;
-    uint16_t co2_eq_ppm, tvoc_ppb;
+    uint16_t co2_eq_ppm, tvoc_ppb, co2_eq_ppm_wo, tvoc_ppb_wo;
     uint16_t sgp40_sraw_voc, sgp40_sraw_voc_wo;
     uint16_t sgp41_sraw_voc, sgp41_sraw_nox, sgp41_sraw_voc_wo, sgp41_sraw_nox_wo;
 
@@ -215,7 +215,7 @@ int main() {
             std::cerr << "Error measuring SHT35" << std::endl;
         }
 
-        // Measure from SGP30
+        // Measure from SGP30 with compensation
         tca9548a.set_channel(2);
         sgp30.set_relative_humidity(temperature, humidity);
         if (sgp30.measure()) {
@@ -223,6 +223,13 @@ int main() {
         }
         co2_eq_ppm = sgp30.getCO2();
         tvoc_ppb = sgp30.getTVOC();
+
+        // Measure from SGP30 without compensation
+        if (sgp30.measure()) {
+            std::cerr << "Error reading SGP30 measurements without compensation" << std::endl;
+        }
+        co2_eq_ppm_wo = sgp30.getCO2();
+        tvoc_ppb_wo = sgp30.getTVOC();
 
         // Measure from SGP40 with compensation
         tca9548a.set_channel(0);
@@ -261,6 +268,7 @@ int main() {
                   << sgp40_voc_index << "," << sgp41_voc_index << ","
                   << temperature << "," << humidity << ","
                   << fs3000_velocity << ","
+                  << tvoc_ppb_wo << "," << co2_eq_ppm_wo << "," << sgp30.getH2_raw() << "," << sgp30.getEthanol_raw() << ","
                   << sgp40_sraw_voc_wo << "," << sgp41_sraw_voc_wo << "," << sgp41_sraw_nox_wo
                   << std::endl;
 
