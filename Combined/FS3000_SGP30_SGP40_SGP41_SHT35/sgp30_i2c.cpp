@@ -1,5 +1,6 @@
 #include "sgp30_i2c.h"
 #include "sensirion_i2c_hal.h"
+#include "sensirion_common.h" // Add this line
 #include <unistd.h> // for usleep
 #include <math.h> // for exp()
 
