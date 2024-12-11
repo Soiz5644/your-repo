@@ -1,10 +1,11 @@
 import time
-import smbus2
+import pigpio
 import picamera
 from datetime import datetime
 import os
 import csv
 import subprocess
+from threading import Thread
 
 # Constants for HM3301 sensor
 HM330_I2C_ADDR = 0x40
@@ -12,16 +13,29 @@ HM330_INIT = 0x80
 HM330_MEM_ADDR = 0x88
 
 class HM3301:
-    def __init__(self, i2c, addr=HM330_I2C_ADDR):
-        self._i2c = i2c
-        self._addr = addr
+    def __init__(self, pi, sda, scl, addr=HM330_I2C_ADDR):
+        self.pi = pi
+        self.sda = sda
+        self.scl = scl
+        self.addr = addr
+
+        # Set up bit-banging I2C
+        self.pi.bb_i2c_close(self.sda)  # Close any previous instance
+        self.pi.bb_i2c_open(self.sda, self.scl, 20000)  # 20 kHz I2C
+
+        # Initialize the sensor
         self._write([HM330_INIT])
 
-    def read_data(self):
-        return self._i2c.read_i2c_block_data(self._addr, HM330_MEM_ADDR, 29)
-
     def _write(self, buffer):
-        self._i2c.write_i2c_block_data(self._addr, 0, buffer)
+        commands = [4, self.addr, 2, 7, 1] + buffer + [3, 0]
+        self.pi.bb_i2c_zip(self.sda, commands)
+
+    def read_data(self):
+        commands = [4, self.addr, 2, 7, 1, HM330_MEM_ADDR, 3, 2, 6, 29, 3, 0]
+        (count, data) = self.pi.bb_i2c_zip(self.sda, commands)
+        if count < 0:
+            raise IOError("I2C read error")
+        return data
 
     def check_crc(self, data):
         total_sum = sum(data[:-1]) & 0xFF
@@ -39,6 +53,9 @@ class HM3301:
         if self.check_crc(data):
             return self.parse_data(data)
         return None
+
+    def close(self):
+        self.pi.bb_i2c_close(self.sda)
 
 def log_to_csv(data, filename):
     with open(filename, "a", newline="") as csvfile:
@@ -60,13 +77,16 @@ def combine_audio_video(video_file, audio_file, output_file):
     command = [
         "ffmpeg",
         "-i", video_file,
-        "-i", audio_file,
+        "-itsoffset", "0.5", "-i", audio_file,  # Adjust audio offset if needed
         "-c:v", "copy",
         "-c:a", "aac",
         "-strict", "experimental",
         output_file
     ]
     subprocess.run(command)
+
+def start_camera(camera, video_file, bitrate):
+    camera.start_recording(video_file, bitrate=bitrate)
 
 def main():
     # Output directory setup
@@ -81,9 +101,14 @@ def main():
     csv_file = f"{output_directory}/sensor_data_{creation_time}.csv"
     output_file = f"{output_directory}/output_{creation_time}.mp4"
 
-    # Initialize HM3301 sensor
-    bus = smbus2.SMBus(1)
-    sensor = HM3301(i2c=bus)
+    # Initialize pigpio and HM3301 sensor
+    pi = pigpio.pi()
+    if not pi.connected:
+        raise RuntimeError("Failed to connect to pigpio daemon")
+
+    sda = 2  # GPIO pin for SDA
+    scl = 3  # GPIO pin for SCL
+    sensor = HM3301(pi, sda, scl)
 
     # Initialize camera
     camera = picamera.PiCamera()
@@ -92,12 +117,17 @@ def main():
     max_bitrate = 17000000
 
     try:
-        # Start recording
-        camera.start_recording(video_file, bitrate=max_bitrate)
-        log_to_csv(["Timestamp", "PM1.0", "PM2.5", "PM10"], csv_file)
+        # Start camera recording in a separate thread
+        video_thread = Thread(target=start_camera, args=(camera, video_file, max_bitrate))
+        video_thread.start()
 
         # Start audio recording
         audio_process = record_audio(audio_file)
+
+        # Ensure the video thread has started
+        video_thread.join()
+
+        log_to_csv(["Timestamp", "PM1.0", "PM2.5", "PM10"], csv_file)
 
         print("Recording... Press Ctrl+C to stop.")
         while True:
@@ -126,7 +156,8 @@ def main():
         combine_audio_video(video_file, audio_file, output_file)
 
         # Cleanup
-        bus.close()
+        sensor.close()
+        pi.stop()
         print(f"Output saved to {output_file}")
 
 if __name__ == "__main__":
