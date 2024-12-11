@@ -78,14 +78,19 @@ def record_audio(output_directory, duration):
 
     creation_time = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
     audio_filename = f"{output_directory}/{creation_time}_{AUDIO_FILENAME}"
-    with wave.open(audio_filename, 'wb') as audio_file:
-        audio_file.setnchannels(1)
-        audio_file.setsampwidth(2)
-        audio_file.setframerate(AUDIO_RATE)
-        with sd.InputStream(device=8, samplerate=AUDIO_RATE, channels=1, callback=audio_callback):
-            sd.sleep(duration * 1000)  # Record audio for the duration in milliseconds
+    try:
+        with wave.open(audio_filename, 'wb') as audio_file:
+            audio_file.setnchannels(1)
+            audio_file.setsampwidth(2)
+            audio_file.setframerate(AUDIO_RATE)
+            with sd.InputStream(device=4, samplerate=AUDIO_RATE, channels=1, callback=audio_callback):
+                sd.sleep(duration * 1000)  # Record audio for the duration in milliseconds
+    except Exception as e:
+        print(f"Error recording audio: {e}")
+        audio_filename = None  # Ensure audio_filename is set to None in case of an error
 
     return audio_filename
+
 
 # Function to combine video and audio using ffmpeg
 def combine_video_audio(video_file, audio_file, output_file):
@@ -136,6 +141,9 @@ def main():
         # Record audio in parallel
         audio_duration = 60  # Record audio for 60 seconds
         audio_filename = record_audio(OUTPUT_DIRECTORY, audio_duration)
+        if audio_filename is None:
+            print("Audio recording failed.")
+            return  # Exit if audio recording failed
 
         while True:
             camera.wait_recording(1)
@@ -163,9 +171,12 @@ def main():
         camera.close()
         bus.close()
 
-        # Combine video and audio
-        final_video_filename = f"{OUTPUT_DIRECTORY}/{creation_time}_{FINAL_VIDEO_FILENAME}"
-        combine_video_audio(video_filename, audio_filename, final_video_filename)
+        # Combine video and audio only if audio_filename is not None
+        if audio_filename:
+            final_video_filename = f"{OUTPUT_DIRECTORY}/{creation_time}_{FINAL_VIDEO_FILENAME}"
+            combine_video_audio(video_filename, audio_filename, final_video_filename)
+        else:
+            print("Skipping video-audio combination due to missing audio file.")
 
 if __name__ == "__main__":
     main()
