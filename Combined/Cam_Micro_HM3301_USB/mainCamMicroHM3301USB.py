@@ -1,28 +1,16 @@
 import time
 import smbus2
 import picamera
-import pyaudio
-import wave
 from datetime import datetime
 import os
 import csv
-import threading
 import subprocess
 
-# Constants
+# Constants for HM3301 sensor
 HM330_I2C_ADDR = 0x40
 HM330_INIT = 0x80
 HM330_MEM_ADDR = 0x88
-RESOLUTION = (1920, 1080)  # Full HD resolution
-FRAMERATE = 30  # Frames per second
-MAX_BITRATE = 17000000  # 17 Mbps
-OUTPUT_DIRECTORY = "/mnt/usb"
-AUDIO_FILENAME = "audio.wav"
-VIDEO_FILENAME = "video.h264"
-FINAL_VIDEO_FILENAME = "final_video.mp4"
-AUDIO_RATE = 44100  # Sample rate for audio
 
-# HM3301 sensor class
 class HM3301:
     def __init__(self, i2c, addr=HM330_I2C_ADDR):
         self._i2c = i2c
@@ -36,165 +24,110 @@ class HM3301:
         self._i2c.write_i2c_block_data(self._addr, 0, buffer)
 
     def check_crc(self, data):
-        total_sum = 0
-        for i in range(29 - 1):
-            total_sum += data[i]
-        total_sum = total_sum & 0xFF
+        total_sum = sum(data[:-1]) & 0xFF
         return total_sum == data[28]
 
     def parse_data(self, data):
         std_PM1 = (data[4] << 8) | data[5]
         std_PM2_5 = (data[6] << 8) | data[7]
         std_PM10 = (data[8] << 8) | data[9]
-        atm_PM1 = (data[10] << 8) | data[11]
-        atm_PM2_5 = (data[12] << 8) | data[13]
-        atm_PM10 = (data[14] << 8) | data[15]
+        return [std_PM1, std_PM2_5, std_PM10]
 
-        return [std_PM1, std_PM2_5, std_PM10, atm_PM1, atm_PM2_5, atm_PM10]
-
-    def get_data(self, select):
-        datas = self.read_data()
+    def get_data(self):
+        data = self.read_data()
         time.sleep(0.005)
-        if self.check_crc(datas):
-            data_parsed = self.parse_data(datas)
-            return data_parsed[select]
+        if self.check_crc(data):
+            return self.parse_data(data)
+        return None
 
-# Function to get free space in megabytes
-def get_free_space_mb(folder):
-    statvfs = os.statvfs(folder)
-    return statvfs.f_frsize * statvfs.f_bavail / 1024 / 1024
-
-# Function to log data to CSV
 def log_to_csv(data, filename):
     with open(filename, "a", newline="") as csvfile:
         writer = csv.writer(csvfile)
         writer.writerow(data)
 
-# Audio recording function
-def record_audio(filename, duration, device_id):
-    format = pyaudio.paInt16  # Equivalent to S16_LE
-    channels = 1  # Ensure your device supports this
-    rate = 44100  # Sample rate
-    frames_per_buffer = 1024
-
-    audio = pyaudio.PyAudio()
-
-    try:
-        stream = audio.open(format=format,
-                            channels=channels,
-                            rate=rate,
-                            input=True,
-                            input_device_index=device_id,
-                            frames_per_buffer=frames_per_buffer)
-    except Exception as e:
-        print(f"Could not open stream: {e}")
-        return
-
-    print("Recording...")
-
-    frames = []
-    for _ in range(0, int(rate / frames_per_buffer * duration)):
-        data = stream.read(frames_per_buffer)
-        frames.append(data)
-
-    print("Finished recording")
-
-    stream.stop_stream()
-    stream.close()
-    audio.terminate()
-
-    with wave.open(filename, 'wb') as wf:
-        wf.setnchannels(channels)
-        wf.setsampwidth(audio.get_sample_size(format))
-        wf.setframerate(rate)
-        wf.writeframes(b''.join(frames))
-
-# Function to combine video and audio using ffmpeg
-def combine_video_audio(video_file, audio_file, output_file):
+def record_audio(audio_file):
     command = [
-        'ffmpeg',
-        '-i', video_file,
-        '-i', audio_file,
-        '-c:v', 'copy',
-        '-c:a', 'aac',
-        '-strict', 'experimental',
+        "arecord",
+        "--device=hw:1,0",
+        "--format", "S16_LE",
+        "--rate", "44100",
+        "-c1",
+        audio_file
+    ]
+    return subprocess.Popen(command)
+
+def combine_audio_video(video_file, audio_file, output_file):
+    command = [
+        "ffmpeg",
+        "-i", video_file,
+        "-i", audio_file,
+        "-c:v", "copy",
+        "-c:a", "aac",
+        "-strict", "experimental",
         output_file
     ]
     subprocess.run(command)
 
-# Main function
 def main():
-    # Create necessary directories
-    if not os.path.exists(OUTPUT_DIRECTORY):
-        os.makedirs(OUTPUT_DIRECTORY)
-        os.chmod(OUTPUT_DIRECTORY, 0o777)
+    # Output directory setup
+    output_directory = "/mnt/usb"
+    if not os.path.exists(output_directory):
+        os.makedirs(output_directory, exist_ok=True)
+    
+    # File names
+    creation_time = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+    video_file = f"{output_directory}/video_{creation_time}.h264"
+    audio_file = f"{output_directory}/audio_{creation_time}.wav"
+    csv_file = f"{output_directory}/sensor_data_{creation_time}.csv"
+    output_file = f"{output_directory}/output_{creation_time}.mp4"
 
-    # Create camera object
-    camera = picamera.PiCamera()
-    camera.resolution = RESOLUTION
-    camera.framerate = FRAMERATE
-
-    # Create I2C bus object
+    # Initialize HM3301 sensor
     bus = smbus2.SMBus(1)
     sensor = HM3301(i2c=bus)
 
-    # Temporisation de 30 secondes
-    time.sleep(30)
+    # Initialize camera
+    camera = picamera.PiCamera()
+    camera.resolution = (1920, 1080)
+    camera.framerate = 30
+    max_bitrate = 17000000
 
     try:
-        # Get current time
-        creation_time = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+        # Start recording
+        camera.start_recording(video_file, bitrate=max_bitrate)
+        log_to_csv(["Timestamp", "PM1.0", "PM2.5", "PM10"], csv_file)
 
-        # Set output filenames
-        video_filename = f"{OUTPUT_DIRECTORY}/{creation_time}_{VIDEO_FILENAME}"
-        csv_filename = f"{OUTPUT_DIRECTORY}/sensor_data_{creation_time}.csv"
-        audio_filename = f"{OUTPUT_DIRECTORY}/{creation_time}_{AUDIO_FILENAME}"
-        
-        # Start video recording
-        camera.start_recording(video_filename, bitrate=int(MAX_BITRATE))
+        # Start audio recording
+        audio_process = record_audio(audio_file)
 
-        # Log sensor data to CSV
-        log_to_csv(["Timestamp", "PM1.0", "PM2.5", "PM10"], csv_filename)
-
-        # Start audio recording in a separate thread
-        audio_thread = threading.Thread(target=record_audio, args=(audio_filename, 60, 1))
-        audio_thread.start()
-
+        print("Recording... Press Ctrl+C to stop.")
         while True:
             camera.wait_recording(1)
-            free_space = get_free_space_mb(OUTPUT_DIRECTORY)
-            if free_space < 100:
-                print("Storage is almost full, stopping recording.")
-                break
-
-            # Read sensor data
-            std_PM1 = sensor.get_data(0)
-            std_PM2_5 = sensor.get_data(1)
-            std_PM10 = sensor.get_data(2)
-
-            if std_PM1 is not None and std_PM2_5 is not None and std_PM10 is not None:
-                print(f"Concentration des particules :\n - De taille 1 µm : {std_PM1} µg/m^3\n - De taille 2,5 µm : {std_PM2_5} µg/m^3\n - De taille 10 µm : {std_PM10} µg/m^3\n")
-                log_to_csv([datetime.now().strftime("%Y-%m-%d %H:%M:%S"), std_PM1, std_PM2_5, std_PM10], csv_filename)
+            data = sensor.get_data()
+            if data:
+                log_to_csv([datetime.now().strftime("%Y-%m-%d %H:%M:%S"), *data], csv_file)
             else:
-                print("Données non valides reçues.")
+                print("Invalid data from sensor.")
+            time.sleep(1)
 
-            time.sleep(30)
     except KeyboardInterrupt:
-        print("Recording stopped by user")
+        print("\nRecording stopped by user.")
+
     finally:
+        # Stop camera recording
         camera.stop_recording()
         camera.close()
+
+        # Stop audio recording
+        if audio_process:
+            audio_process.terminate()
+
+        # Combine video and audio
+        print("Combining audio and video...")
+        combine_audio_video(video_file, audio_file, output_file)
+
+        # Cleanup
         bus.close()
-
-        # Wait for the audio thread to finish
-        audio_thread.join()
-
-        # Combine video and audio only if audio_filename is not None
-        if audio_filename:
-            final_video_filename = f"{OUTPUT_DIRECTORY}/{creation_time}_{FINAL_VIDEO_FILENAME}"
-            combine_video_audio(video_filename, audio_filename, final_video_filename)
-        else:
-            print("Skipping video-audio combination due to missing audio file.")
+        print(f"Output saved to {output_file}")
 
 if __name__ == "__main__":
     main()
