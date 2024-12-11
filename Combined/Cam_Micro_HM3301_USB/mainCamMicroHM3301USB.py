@@ -1,14 +1,27 @@
 import time
 import smbus2
 import picamera
+import sounddevice as sd
+import wave
 from datetime import datetime
 import os
 import csv
+import subprocess
 
+# Constants
 HM330_I2C_ADDR = 0x40
 HM330_INIT = 0x80
 HM330_MEM_ADDR = 0x88
+RESOLUTION = (1920, 1080)  # Full HD resolution
+FRAMERATE = 30  # Frames per second
+MAX_BITRATE = 17000000  # 17 Mbps
+OUTPUT_DIRECTORY = "/mnt/usb"
+AUDIO_FILENAME = "audio.wav"
+VIDEO_FILENAME = "video.h264"
+FINAL_VIDEO_FILENAME = "final_video.mp4"
+AUDIO_RATE = 44100  # Sample rate for audio
 
+# HM3301 sensor class
 class HM3301:
     def __init__(self, i2c, addr=HM330_I2C_ADDR):
         self._i2c = i2c
@@ -40,14 +53,13 @@ class HM3301:
 
     def get_data(self, select):
         datas = self.read_data()
-        time.sleep(0.005)  # Sleep for 5 milliseconds
+        time.sleep(0.005)
         if self.check_crc(datas):
             data_parsed = self.parse_data(datas)
-            measure = data_parsed[select]
-            return measure
+            return data_parsed[select]
 
+# Function to get free space in megabytes
 def get_free_space_mb(folder):
-    """ Returns the free space in megabytes """
     statvfs = os.statvfs(folder)
     return statvfs.f_frsize * statvfs.f_bavail / 1024 / 1024
 
@@ -57,84 +69,103 @@ def log_to_csv(data, filename):
         writer = csv.writer(csvfile)
         writer.writerow(data)
 
-# Set a lower resolution to comply with H.264 macroblock limits
-resolution = (1920, 1080)  # Full HD resolution
-framerate = 30  # Frames per second
+# Audio recording function
+def record_audio(output_directory, duration):
+    def audio_callback(indata, frames, time, status):
+        if status:
+            print(status, flush=True)
+        audio_file.writeframes(indata.tobytes())
 
-# Create a camera object
-camera = picamera.PiCamera()
-
-# Create an I2C bus object
-bus = smbus2.SMBus(1)  # Use 0 for older Raspberry Pi boards
-
-# Instantiate the HM3301 sensor
-sensor = HM3301(i2c=bus)
-
-# Temporisation de 30 secondes
-time.sleep(30)
-
-try:
-    # Set the camera resolution and framerate
-    camera.resolution = resolution
-    camera.framerate = framerate
-
-    # Set the maximum bitrate for high quality
-    max_bitrate = 17000000  # 17 Mbps
-
-    # Get the current date and time
     creation_time = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+    audio_filename = f"{output_directory}/{creation_time}_{AUDIO_FILENAME}"
+    with wave.open(audio_filename, 'wb') as audio_file:
+        audio_file.setnchannels(1)
+        audio_file.setsampwidth(2)
+        audio_file.setframerate(AUDIO_RATE)
+        with sd.InputStream(samplerate=AUDIO_RATE, channels=1, callback=audio_callback):
+            sd.sleep(duration * 1000)  # Record audio for the duration in milliseconds
 
-    # Set the recording parameters to save in the /mnt/usb directory
-    output_directory = "/mnt/usb"
-    if not os.path.exists(output_directory):
-        os.makedirs(output_directory)
-        os.chmod(output_directory, 0o777)
-    output_filename = f"{output_directory}/video_{creation_time}.h264"
-    camera.start_recording(output_filename, bitrate=int(max_bitrate))
+    return audio_filename
 
-    # CSV file for sensor data
-    csv_filename = f"{output_directory}/sensor_data_{creation_time}.csv"
-    log_to_csv(["Timestamp", "PM1.0", "PM2.5", "PM10"], csv_filename)
+# Function to combine video and audio using ffmpeg
+def combine_video_audio(video_file, audio_file, output_file):
+    command = [
+        'ffmpeg',
+        '-i', video_file,
+        '-i', audio_file,
+        '-c:v', 'copy',
+        '-c:a', 'aac',
+        '-strict', 'experimental',
+        output_file
+    ]
+    subprocess.run(command)
 
-    while True:
-        # Keep recording until stopped by the user or storage is full
-        camera.wait_recording(1)
-        free_space = get_free_space_mb(output_directory)
-        if free_space < 100:  # stop recording if less than 100 MB is available
-            print("Storage is almost full, stopping recording.")
-            break
+# Main function
+def main():
+    # Create necessary directories
+    if not os.path.exists(OUTPUT_DIRECTORY):
+        os.makedirs(OUTPUT_DIRECTORY)
+        os.chmod(OUTPUT_DIRECTORY, 0o777)
+
+    # Create camera object
+    camera = picamera.PiCamera()
+    camera.resolution = RESOLUTION
+    camera.framerate = FRAMERATE
+
+    # Create I2C bus object
+    bus = smbus2.SMBus(1)
+    sensor = HM3301(i2c=bus)
+
+    # Temporisation de 30 secondes
+    time.sleep(30)
+
+    try:
+        # Get current time
+        creation_time = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+
+        # Set output filenames
+        video_filename = f"{OUTPUT_DIRECTORY}/{creation_time}_{VIDEO_FILENAME}"
+        csv_filename = f"{OUTPUT_DIRECTORY}/sensor_data_{creation_time}.csv"
         
-        # Read sensor data
-        std_PM1 = sensor.get_data(0)
-        std_PM2_5 = sensor.get_data(1)
-        std_PM10 = sensor.get_data(2)
+        # Start video recording
+        camera.start_recording(video_filename, bitrate=int(MAX_BITRATE))
 
-        if std_PM1 is not None and std_PM2_5 is not None and std_PM10 is not None:
-            # Display sensor data
-            print("Concentration des particules : ")
-            print(" - De taille 1 µm : %d µg/m^3" % std_PM1)
-            print(" - De taille 2,5 µm : %d µg/m^3" % std_PM2_5)
-            print(" - De taille 10 µm : %d µg/m^3\n" % std_PM10)
+        # Log sensor data to CSV
+        log_to_csv(["Timestamp", "PM1.0", "PM2.5", "PM10"], csv_filename)
 
-            # Log sensor data to CSV
-            log_to_csv([datetime.now().strftime("%Y-%m-%d %H:%M:%S"), std_PM1, std_PM2_5, std_PM10], csv_filename)
-        else:
-            print("Données non valides reçues.")
+        # Record audio in parallel
+        audio_duration = 60  # Record audio for 60 seconds
+        audio_filename = record_audio(OUTPUT_DIRECTORY, audio_duration)
 
-        # Temporisation de 30 secondes
-        time.sleep(30)
+        while True:
+            camera.wait_recording(1)
+            free_space = get_free_space_mb(OUTPUT_DIRECTORY)
+            if free_space < 100:
+                print("Storage is almost full, stopping recording.")
+                break
 
-except KeyboardInterrupt:
-    print("Recording stopped by user")
+            # Read sensor data
+            std_PM1 = sensor.get_data(0)
+            std_PM2_5 = sensor.get_data(1)
+            std_PM10 = sensor.get_data(2)
 
-finally:
-    # Stop recording and release the camera
-    camera.stop_recording()
-    camera.close()
+            if std_PM1 is not None and std_PM2_5 is not None and std_PM10 is not None:
+                print(f"Concentration des particules :\n - De taille 1 µm : {std_PM1} µg/m^3\n - De taille 2,5 µm : {std_PM2_5} µg/m^3\n - De taille 10 µm : {std_PM10} µg/m^3\n")
+                log_to_csv([datetime.now().strftime("%Y-%m-%d %H:%M:%S"), std_PM1, std_PM2_5, std_PM10], csv_filename)
+            else:
+                print("Données non valides reçues.")
 
-    # Save the creation date and time to a text file
-    with open(f"{output_directory}/video_metadata_{creation_time}.txt", "w") as metadata_file:
-        metadata_file.write(f"Video creation date and time: {creation_time}")
+            time.sleep(30)
+    except KeyboardInterrupt:
+        print("Recording stopped by user")
+    finally:
+        camera.stop_recording()
+        camera.close()
+        bus.close()
 
-    # Close the I2C bus
-    bus.close()
+        # Combine video and audio
+        final_video_filename = f"{OUTPUT_DIRECTORY}/{creation_time}_{FINAL_VIDEO_FILENAME}"
+        combine_video_audio(video_filename, audio_filename, final_video_filename)
+
+if __name__ == "__main__":
+    main()
