@@ -1,10 +1,6 @@
 import sounddevice as sd
 import wave
 
-# Function to list audio devices
-def list_audio_devices():
-    print(sd.query_devices())
-
 # Function to record audio
 def record_audio(device_id, duration=5, filename="test_audio.wav"):
     def audio_callback(indata, frames, time, status):
@@ -25,11 +21,8 @@ def record_audio(device_id, duration=5, filename="test_audio.wav"):
         print(f"Error recording audio: {e}")
 
 if __name__ == "__main__":
-    # List audio devices
-    list_audio_devices()
-
-    # Prompt user to enter the device ID
-    device_id = int(input("Enter the device ID for the microphone: "))
+    # Device ID for the USB microphone
+    device_id = 1  # Update this with the correct device ID
 
     # Record audio
     record_audio(device_id)
