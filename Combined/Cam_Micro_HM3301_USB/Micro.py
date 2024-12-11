@@ -1,6 +1,10 @@
 import sounddevice as sd
 import wave
 
+# Function to list audio devices
+def list_audio_devices():
+    print(sd.query_devices())
+
 # Function to record audio
 def record_audio(device_id, duration=5, filename="test_audio.wav"):
     def audio_callback(indata, frames, time, status):
@@ -21,8 +25,11 @@ def record_audio(device_id, duration=5, filename="test_audio.wav"):
         print(f"Error recording audio: {e}")
 
 if __name__ == "__main__":
-    # Device ID for the USB microphone
-    device_id = 1  # Update this with the correct device ID
+    # List audio devices
+    list_audio_devices()
+
+    # Device ID for the USB microphone (use hw:1,0 equivalent)
+    device_id = 1  # Update this with the correct device ID from arecord -l
 
     # Record audio
     record_audio(device_id)
