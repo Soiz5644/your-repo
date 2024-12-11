@@ -1,10 +1,13 @@
 import time
 import smbus2
 import picamera
-import subprocess
+import pyaudio
+import wave
 from datetime import datetime
 import os
 import csv
+import threading
+import subprocess
 
 # Constants
 HM330_I2C_ADDR = 0x40
@@ -68,28 +71,43 @@ def log_to_csv(data, filename):
         writer.writerow(data)
 
 # Audio recording function
-def record_audio(output_directory):
-    # Define the command and its arguments
-    command = [
-        "arecord",
-        "--device=hw:1,0",
-        "--format", "S16_LE",
-        "--rate", "44100",
-        "-c1",
-        f"{output_directory}/{AUDIO_FILENAME}"
-    ]
+def record_audio(filename, duration, device_id):
+    format = pyaudio.paInt16  # Equivalent to S16_LE
+    channels = 1  # Ensure your device supports this
+    rate = 44100  # Sample rate
+    frames_per_buffer = 1024
+
+    audio = pyaudio.PyAudio()
 
     try:
-        print("Recording... Press Ctrl+C to stop.")
-        subprocess.run(command, check=True)
-    except KeyboardInterrupt:
-        print("\nRecording interrupted by user.")
-    except subprocess.CalledProcessError as e:
-        print(f"Error occurred while recording: {e}")
-    except FileNotFoundError:
-        print("The 'arecord' utility is not found. Ensure it is installed on your Raspberry Pi.")
-    finally:
-        print("Exiting script.")
+        stream = audio.open(format=format,
+                            channels=channels,
+                            rate=rate,
+                            input=True,
+                            input_device_index=device_id,
+                            frames_per_buffer=frames_per_buffer)
+    except Exception as e:
+        print(f"Could not open stream: {e}")
+        return
+
+    print("Recording...")
+
+    frames = []
+    for _ in range(0, int(rate / frames_per_buffer * duration)):
+        data = stream.read(frames_per_buffer)
+        frames.append(data)
+
+    print("Finished recording")
+
+    stream.stop_stream()
+    stream.close()
+    audio.terminate()
+
+    with wave.open(filename, 'wb') as wf:
+        wf.setnchannels(channels)
+        wf.setsampwidth(audio.get_sample_size(format))
+        wf.setframerate(rate)
+        wf.writeframes(b''.join(frames))
 
 # Function to combine video and audio using ffmpeg
 def combine_video_audio(video_file, audio_file, output_file):
@@ -130,6 +148,7 @@ def main():
         # Set output filenames
         video_filename = f"{OUTPUT_DIRECTORY}/{creation_time}_{VIDEO_FILENAME}"
         csv_filename = f"{OUTPUT_DIRECTORY}/sensor_data_{creation_time}.csv"
+        audio_filename = f"{OUTPUT_DIRECTORY}/{creation_time}_{AUDIO_FILENAME}"
         
         # Start video recording
         camera.start_recording(video_filename, bitrate=int(MAX_BITRATE))
@@ -137,12 +156,9 @@ def main():
         # Log sensor data to CSV
         log_to_csv(["Timestamp", "PM1.0", "PM2.5", "PM10"], csv_filename)
 
-        # Record audio in parallel
-        audio_filename = f"{OUTPUT_DIRECTORY}/{creation_time}_{AUDIO_FILENAME}"
-        record_audio(OUTPUT_DIRECTORY)
-        if audio_filename is None:
-            print("Audio recording failed.")
-            return  # Exit if audio recording failed
+        # Start audio recording in a separate thread
+        audio_thread = threading.Thread(target=record_audio, args=(audio_filename, 60, 1))
+        audio_thread.start()
 
         while True:
             camera.wait_recording(1)
@@ -156,11 +172,9 @@ def main():
             std_PM2_5 = sensor.get_data(1)
             std_PM10 = sensor.get_data(2)
 
-            if std_PM1 is not None and std_PM2_5 is not None and std_PM10 is not None:
-                print(f"Concentration des particules :\n - De taille 1 µm : {std_PM1} µg/m^3\n - De taille 2,5 µm : {std_PM2_5} µg/m^3\n - De taille 10 µm : {std_PM10} µg/m^3\n")
-                log_to_csv([datetime.now().strftime("%Y-%m-%d %H:%M:%S"), std_PM1, std_PM2_5, std_PM10], csv_filename)
-            else:
-                print("Données non valides reçues.")
+            # Save data to CSV regardless of its value
+            print(f"Concentration des particules :\n - De taille 1 µm : {std_PM1} µg/m^3\n - De taille 2,5 µm : {std_PM2_5} µg/m^3\n - De taille 10 µm : {std_PM10} µg/m^3\n")
+            log_to_csv([datetime.now().strftime("%Y-%m-%d %H:%M:%S"), std_PM1, std_PM2_5, std_PM10], csv_filename)
 
             time.sleep(30)
     except KeyboardInterrupt:
@@ -169,6 +183,9 @@ def main():
         camera.stop_recording()
         camera.close()
         bus.close()
+
+        # Wait for the audio thread to finish
+        audio_thread.join()
 
         # Combine video and audio only if audio_filename is not None
         if audio_filename:
