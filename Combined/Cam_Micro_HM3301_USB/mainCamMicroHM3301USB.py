@@ -19,9 +19,16 @@ class HM3301:
         self.scl = scl
         self.addr = addr
 
-        # Set up bit-banging I2C
-        self.pi.bb_i2c_close(self.sda)  # Close any previous instance
-        self.pi.bb_i2c_open(self.sda, self.scl, 20000)  # 20 kHz I2C
+        # Close any previous instance of bit-banging I2C
+        try:
+            self.pi.bb_i2c_close(self.sda)
+        except pigpio.error as e:
+            if str(e) != "'no bit bang I2C in progress on GPIO'":
+                raise
+
+        # Set up bit-banging I2C at 20 kHz
+        self.pi.bb_i2c_open(self.sda, self.scl, 20000)
+
 
         # Initialize the sensor
         self._write([HM330_INIT])
@@ -55,38 +62,33 @@ class HM3301:
         return None
 
     def close(self):
-        self.pi.bb_i2c_close(self.sda)
+        try:
+            self.pi.bb_i2c_close(self.sda)
+        except pigpio.error as e:
+            print(f"Error closing I2C: {e}")
 
 def log_to_csv(data, filename):
     with open(filename, "a", newline="") as csvfile:
         writer = csv.writer(csvfile)
         writer.writerow(data)
 
-def record_audio(audio_file):
-    command = [
-        "arecord",
-        "--device=hw:1,0",
-        "--format", "S16_LE",
-        "--rate", "44100",
-        "-c1",
-        audio_file
-    ]
-    return subprocess.Popen(command)
-
-def combine_audio_video(video_file, audio_file, output_file):
+def record_audio_video(output_file):
     command = [
         "ffmpeg",
-        "-i", video_file,
-        "-itsoffset", "0.5", "-i", audio_file,  # Adjust audio offset if needed
-        "-c:v", "copy",
+        "-f", "alsa",
+        "-ac", "1",
+        "-i", "hw:1,0",
+        "-f", "v4l2",
+        "-framerate", "30",
+        "-video_size", "1920x1080",
+        "-i", "/dev/video0",
+        "-c:v", "h264_omx",
+        "-b:v", "1700k",
         "-c:a", "aac",
         "-strict", "experimental",
         output_file
     ]
-    subprocess.run(command)
-
-def start_camera(camera, video_file, bitrate):
-    camera.start_recording(video_file, bitrate=bitrate)
+    return subprocess.Popen(command)
 
 def main():
     # Output directory setup
@@ -96,10 +98,8 @@ def main():
     
     # File names
     creation_time = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
-    video_file = f"{output_directory}/video_{creation_time}.h264"
-    audio_file = f"{output_directory}/audio_{creation_time}.wav"
-    csv_file = f"{output_directory}/sensor_data_{creation_time}.csv"
     output_file = f"{output_directory}/output_{creation_time}.mp4"
+    csv_file = f"{output_directory}/sensor_data_{creation_time}.csv"
 
     # Initialize pigpio and HM3301 sensor
     pi = pigpio.pi()
@@ -110,50 +110,28 @@ def main():
     scl = 3  # GPIO pin for SCL
     sensor = HM3301(pi, sda, scl)
 
-    # Initialize camera
-    camera = picamera.PiCamera()
-    camera.resolution = (1920, 1080)
-    camera.framerate = 30
-    max_bitrate = 17000000
-
     try:
-        # Start camera recording in a separate thread
-        video_thread = Thread(target=start_camera, args=(camera, video_file, max_bitrate))
-        video_thread.start()
-
-        # Start audio recording
-        audio_process = record_audio(audio_file)
-
-        # Ensure the video thread has started
-        video_thread.join()
+        # Start audio-video recording
+        av_process = record_audio_video(output_file)
 
         log_to_csv(["Timestamp", "PM1.0", "PM2.5", "PM10"], csv_file)
 
         print("Recording... Press Ctrl+C to stop.")
         while True:
-            camera.wait_recording(1)
+            time.sleep(1)
             data = sensor.get_data()
             if data:
                 log_to_csv([datetime.now().strftime("%Y-%m-%d %H:%M:%S"), *data], csv_file)
             else:
                 print("Invalid data from sensor.")
-            time.sleep(1)
 
     except KeyboardInterrupt:
         print("\nRecording stopped by user.")
 
     finally:
-        # Stop camera recording
-        camera.stop_recording()
-        camera.close()
-
-        # Stop audio recording
-        if audio_process:
-            audio_process.terminate()
-
-        # Combine video and audio
-        print("Combining audio and video...")
-        combine_audio_video(video_file, audio_file, output_file)
+        # Stop audio-video recording
+        if av_process:
+            av_process.terminate()
 
         # Cleanup
         sensor.close()
