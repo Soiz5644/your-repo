@@ -1,7 +1,7 @@
 import time
 import smbus2
 import picamera
-import sounddevice as sd
+import pyaudio
 import wave
 from datetime import datetime
 import os
@@ -69,34 +69,44 @@ def log_to_csv(data, filename):
         writer = csv.writer(csvfile)
         writer.writerow(data)
 
-# Audio recording function
-def record_audio(output_directory, duration):
-    def audio_callback(indata, frames, time, status):
-        if status:
-            print(f"Status: {status}", flush=True)
-        audio_file.writeframes(indata.tobytes())
+# Audio recording function (updated)
+def record_audio(filename, duration, device_id):
+    format = pyaudio.paInt16  # Equivalent to S16_LE
+    channels = 1  # Ensure your device supports this
+    rate = 44100  # Sample rate
+    frames_per_buffer = 1024
 
-    creation_time = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
-    audio_filename = f"{output_directory}/{creation_time}_{AUDIO_FILENAME}"
+    audio = pyaudio.PyAudio()
+
     try:
-        print(f"Opening wave file: {audio_filename}")
-        with wave.open(audio_filename, 'wb') as audio_file:
-            audio_file.setnchannels(1)  # Set to 1 channel, adjust if necessary based on query_devices output
-            audio_file.setsampwidth(2)
-            audio_file.setframerate(AUDIO_RATE)
-            print("Wave file opened successfully")
-
-            print("Starting InputStream")
-            with sd.InputStream(device=4, samplerate=AUDIO_RATE, channels=1, callback=audio_callback):  # Set channels to 1, adjust if necessary
-                print("InputStream started successfully")
-                sd.sleep(duration * 1000)  # Record audio for the duration in milliseconds
-                print("Finished recording audio")
+        stream = audio.open(format=format,
+                            channels=channels,
+                            rate=rate,
+                            input=True,
+                            input_device_index=device_id,
+                            frames_per_buffer=frames_per_buffer)
     except Exception as e:
-        print(f"Error recording audio: {e}")
-        audio_filename = None  # Ensure audio_filename is set to None in case of an error
+        print(f"Could not open stream: {e}")
+        return
 
-    return audio_filename
+    print("Recording...")
 
+    frames = []
+    for _ in range(0, int(rate / frames_per_buffer * duration)):
+        data = stream.read(frames_per_buffer)
+        frames.append(data)
+
+    print("Finished recording")
+
+    stream.stop_stream()
+    stream.close()
+    audio.terminate()
+
+    with wave.open(filename, 'wb') as wf:
+        wf.setnchannels(channels)
+        wf.setsampwidth(audio.get_sample_size(format))
+        wf.setframerate(rate)
+        wf.writeframes(b''.join(frames))
 
 # Function to combine video and audio using ffmpeg
 def combine_video_audio(video_file, audio_file, output_file):
@@ -114,8 +124,7 @@ def combine_video_audio(video_file, audio_file, output_file):
 # Main function
 def main():
     # Print available audio devices
-    print(sd.query_devices())
-
+    print(pyaudio.PyAudio().get_device_info_by_index(1))
     # Create necessary directories
     if not os.path.exists(OUTPUT_DIRECTORY):
         os.makedirs(OUTPUT_DIRECTORY)
@@ -149,7 +158,8 @@ def main():
 
         # Record audio in parallel
         audio_duration = 60  # Record audio for 60 seconds
-        audio_filename = record_audio(OUTPUT_DIRECTORY, audio_duration)
+        audio_filename = f"{OUTPUT_DIRECTORY}/{creation_time}_{AUDIO_FILENAME}"
+        record_audio(audio_filename, duration=audio_duration, device_id=1)
         if audio_filename is None:
             print("Audio recording failed.")
             return  # Exit if audio recording failed
