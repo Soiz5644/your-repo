@@ -73,18 +73,24 @@ def log_to_csv(data, filename):
 def record_audio(output_directory, duration):
     def audio_callback(indata, frames, time, status):
         if status:
-            print(status, flush=True)
+            print(f"Status: {status}", flush=True)
         audio_file.writeframes(indata.tobytes())
 
     creation_time = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
     audio_filename = f"{output_directory}/{creation_time}_{AUDIO_FILENAME}"
     try:
+        print(f"Opening wave file: {audio_filename}")
         with wave.open(audio_filename, 'wb') as audio_file:
-            audio_file.setnchannels(1)
+            audio_file.setnchannels(1)  # Set to 1 channel, adjust if necessary based on query_devices output
             audio_file.setsampwidth(2)
             audio_file.setframerate(AUDIO_RATE)
-            with sd.InputStream(device=4, samplerate=AUDIO_RATE, channels=1, callback=audio_callback):
+            print("Wave file opened successfully")
+
+            print("Starting InputStream")
+            with sd.InputStream(device=4, samplerate=AUDIO_RATE, channels=1, callback=audio_callback):  # Set channels to 1, adjust if necessary
+                print("InputStream started successfully")
                 sd.sleep(duration * 1000)  # Record audio for the duration in milliseconds
+                print("Finished recording audio")
     except Exception as e:
         print(f"Error recording audio: {e}")
         audio_filename = None  # Ensure audio_filename is set to None in case of an error
@@ -107,6 +113,9 @@ def combine_video_audio(video_file, audio_file, output_file):
 
 # Main function
 def main():
+    # Print available audio devices
+    print(sd.query_devices())
+
     # Create necessary directories
     if not os.path.exists(OUTPUT_DIRECTORY):
         os.makedirs(OUTPUT_DIRECTORY)
