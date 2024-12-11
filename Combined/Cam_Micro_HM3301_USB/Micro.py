@@ -1,48 +1,23 @@
-import pyaudio
-import wave
+import subprocess
 
-def record_audio(filename, duration, device_id):
-    # Set up parameters for recording
-    format = pyaudio.paInt16  # Equivalent to S16_LE
-    channels = 1  # -c1
-    rate = 44100  # --rate 44100
-    frames_per_buffer = 1024
+# Define the command and its arguments
+command = [
+    "arecord",
+    "--device=hw:1,0",
+    "--format", "S16_LE",
+    "--rate", "44100",
+    "-c1",
+    "test.wav"
+]
 
-    # Initialize PyAudio
-    audio = pyaudio.PyAudio()
-
-    # Open the stream
-    try:
-        stream = audio.open(format=format,
-                            channels=channels,
-                            rate=rate,
-                            input=True,
-                            input_device_index=device_id,
-                            frames_per_buffer=frames_per_buffer)
-    except Exception as e:
-        print(f"Could not open stream: {e}")
-        return
-
-    print("Recording...")
-
-    frames = []
-    for _ in range(0, int(rate / frames_per_buffer * duration)):
-        data = stream.read(frames_per_buffer)
-        frames.append(data)
-
-    print("Finished recording")
-
-    # Stop and close the stream
-    stream.stop_stream()
-    stream.close()
-    audio.terminate()
-
-    # Save the recording as a WAV file
-    with wave.open(filename, 'wb') as wf:
-        wf.setnchannels(channels)
-        wf.setsampwidth(audio.get_sample_size(format))
-        wf.setframerate(rate)
-        wf.writeframes(b''.join(frames))
-
-if __name__ == "__main__":
-    record_audio("test.wav", duration=5, device_id=1)  # Update device_id if necessary
+try:
+    print("Recording... Press Ctrl+C to stop.")
+    subprocess.run(command, check=True)
+except KeyboardInterrupt:
+    print("\nRecording interrupted by user.")
+except subprocess.CalledProcessError as e:
+    print(f"Error occurred while recording: {e}")
+except FileNotFoundError:
+    print("The 'arecord' utility is not found. Ensure it is installed on your Raspberry Pi.")
+finally:
+    print("Exiting script.")
