@@ -82,7 +82,7 @@ def record_audio(output_directory, duration):
         audio_file.setnchannels(1)
         audio_file.setsampwidth(2)
         audio_file.setframerate(AUDIO_RATE)
-        with sd.InputStream(samplerate=AUDIO_RATE, channels=1, callback=audio_callback):
+        with sd.InputStream(device=8, samplerate=AUDIO_RATE, channels=1, callback=audio_callback):
             sd.sleep(duration * 1000)  # Record audio for the duration in milliseconds
 
     return audio_filename
