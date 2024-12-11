@@ -12,12 +12,16 @@ def record_audio(filename, duration, device_id):
     audio = pyaudio.PyAudio()
 
     # Open the stream
-    stream = audio.open(format=format,
-                        channels=channels,
-                        rate=rate,
-                        input=True,
-                        input_device_index=device_id,
-                        frames_per_buffer=frames_per_buffer)
+    try:
+        stream = audio.open(format=format,
+                            channels=channels,
+                            rate=rate,
+                            input=True,
+                            input_device_index=device_id,
+                            frames_per_buffer=frames_per_buffer)
+    except Exception as e:
+        print(f"Could not open stream: {e}")
+        return
 
     print("Recording...")
 
