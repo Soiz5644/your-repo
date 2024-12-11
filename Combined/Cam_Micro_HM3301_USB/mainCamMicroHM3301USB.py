@@ -1,12 +1,10 @@
 import time
 import smbus2
 import picamera
-import pyaudio
-import wave
+import subprocess
 from datetime import datetime
 import os
 import csv
-import subprocess
 
 # Constants
 HM330_I2C_ADDR = 0x40
@@ -69,44 +67,29 @@ def log_to_csv(data, filename):
         writer = csv.writer(csvfile)
         writer.writerow(data)
 
-# Audio recording function (updated)
-def record_audio(filename, duration, device_id):
-    format = pyaudio.paInt16  # Equivalent to S16_LE
-    channels = 1  # Ensure your device supports this
-    rate = 44100  # Sample rate
-    frames_per_buffer = 1024
-
-    audio = pyaudio.PyAudio()
+# Audio recording function
+def record_audio(output_directory):
+    # Define the command and its arguments
+    command = [
+        "arecord",
+        "--device=hw:1,0",
+        "--format", "S16_LE",
+        "--rate", "44100",
+        "-c1",
+        f"{output_directory}/{AUDIO_FILENAME}"
+    ]
 
     try:
-        stream = audio.open(format=format,
-                            channels=channels,
-                            rate=rate,
-                            input=True,
-                            input_device_index=device_id,
-                            frames_per_buffer=frames_per_buffer)
-    except Exception as e:
-        print(f"Could not open stream: {e}")
-        return
-
-    print("Recording...")
-
-    frames = []
-    for _ in range(0, int(rate / frames_per_buffer * duration)):
-        data = stream.read(frames_per_buffer)
-        frames.append(data)
-
-    print("Finished recording")
-
-    stream.stop_stream()
-    stream.close()
-    audio.terminate()
-
-    with wave.open(filename, 'wb') as wf:
-        wf.setnchannels(channels)
-        wf.setsampwidth(audio.get_sample_size(format))
-        wf.setframerate(rate)
-        wf.writeframes(b''.join(frames))
+        print("Recording... Press Ctrl+C to stop.")
+        subprocess.run(command, check=True)
+    except KeyboardInterrupt:
+        print("\nRecording interrupted by user.")
+    except subprocess.CalledProcessError as e:
+        print(f"Error occurred while recording: {e}")
+    except FileNotFoundError:
+        print("The 'arecord' utility is not found. Ensure it is installed on your Raspberry Pi.")
+    finally:
+        print("Exiting script.")
 
 # Function to combine video and audio using ffmpeg
 def combine_video_audio(video_file, audio_file, output_file):
@@ -123,8 +106,6 @@ def combine_video_audio(video_file, audio_file, output_file):
 
 # Main function
 def main():
-    # Print available audio devices
-    print(pyaudio.PyAudio().get_device_info_by_index(1))
     # Create necessary directories
     if not os.path.exists(OUTPUT_DIRECTORY):
         os.makedirs(OUTPUT_DIRECTORY)
@@ -157,9 +138,8 @@ def main():
         log_to_csv(["Timestamp", "PM1.0", "PM2.5", "PM10"], csv_filename)
 
         # Record audio in parallel
-        audio_duration = 60  # Record audio for 60 seconds
         audio_filename = f"{OUTPUT_DIRECTORY}/{creation_time}_{AUDIO_FILENAME}"
-        record_audio(audio_filename, duration=audio_duration, device_id=1)
+        record_audio(OUTPUT_DIRECTORY)
         if audio_filename is None:
             print("Audio recording failed.")
             return  # Exit if audio recording failed
