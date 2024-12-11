@@ -172,9 +172,11 @@ def main():
             std_PM2_5 = sensor.get_data(1)
             std_PM10 = sensor.get_data(2)
 
-            # Save data to CSV regardless of its value
-            print(f"Concentration des particules :\n - De taille 1 µm : {std_PM1} µg/m^3\n - De taille 2,5 µm : {std_PM2_5} µg/m^3\n - De taille 10 µm : {std_PM10} µg/m^3\n")
-            log_to_csv([datetime.now().strftime("%Y-%m-%d %H:%M:%S"), std_PM1, std_PM2_5, std_PM10], csv_filename)
+            if std_PM1 is not None and std_PM2_5 is not None and std_PM10 is not None:
+                print(f"Concentration des particules :\n - De taille 1 µm : {std_PM1} µg/m^3\n - De taille 2,5 µm : {std_PM2_5} µg/m^3\n - De taille 10 µm : {std_PM10} µg/m^3\n")
+                log_to_csv([datetime.now().strftime("%Y-%m-%d %H:%M:%S"), std_PM1, std_PM2_5, std_PM10], csv_filename)
+            else:
+                print("Données non valides reçues.")
 
             time.sleep(30)
     except KeyboardInterrupt:
