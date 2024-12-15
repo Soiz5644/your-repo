@@ -46,13 +46,6 @@ int SGP30::readRaw() {
         return -1;
     }
 
-    uint8_t crc_h2 = generate_crc(data, 2);
-    uint8_t crc_ethanol = generate_crc(data + 3, 2);
-
-    if (crc_h2 != data[2] || crc_ethanol != data[5]) {
-        return -1;
-    }
-
     h2_raw = (data[0] << 8) | data[1];
     ethanol_raw = (data[3] << 8) | data[4];
 
