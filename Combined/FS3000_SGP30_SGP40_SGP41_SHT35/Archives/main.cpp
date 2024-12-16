@@ -16,6 +16,8 @@
 #include <wiringPi.h>
 #include <wiringPiI2C.h>
 
+#define NO_ERROR 0  // Define NO_ERROR as 0
+
 // Include FS3000 header
 #define FS3000_ADDRESS 0x28
 #define FS3000_1005 0x00
@@ -91,8 +93,6 @@ int RTrobot_FS3000::FS3000_i2c_read() {
         }
     }
 }
-
-#define NO_ERROR 0  // Define NO_ERROR as 0
 
 std::string get_current_time() {
     auto now = std::chrono::system_clock::now();
@@ -196,58 +196,80 @@ int main() {
     
     // Write header if file is created new
     if (!file_exists_flag) {
-        data_file << "Timestamp,SGP30_tVOC_ppb,SGP30_CO2eq_ppm,SGP30_H2_raw,SGP30_Ethanol_raw,SGP30_H2,SGP30_Ethanol,SGP40_SRAW_VOC,SGP41_SRAW_VOC,SGP41_SRAW_NOX,sgp40_voc_index,sgp41_voc_index,Temperature_C,Humidity_%,FS3000_Velocity_m/s" << std::endl;
+        data_file << "Timestamp,SGP30_tVOC_ppb,SGP30_CO2eq_ppm,SGP30_H2_raw,SGP30_Ethanol_raw,SGP30_H2,SGP30_Ethanol,SGP40_SRAW_VOC,SGP41_SRAW_VOC,SGP41_SRAW_NOX,sgp40_voc_index,sgp41_voc_index,Temperature,Humidity,FS3000_Air_Velocity,SGP30_tVOC_ppb_wo,SGP30_CO2eq_ppm_wo,SGP30_H2_raw_wo,SGP30_Ethanol_raw_wo,SGP40_SRAW_VOC_wo,SGP41_SRAW_VOC_wo,SGP41_SRAW_NOX_wo" << std::endl;
     }
 
     // Measure temperature and humidity from SHT35, and raw signals from SGP30, SGP40, SGP41, and FS3000 in an infinite loop
     float temperature = 0.0;
     float humidity = 0.0;
-    uint16_t co2_eq_ppm, tvoc_ppb;
-    uint16_t sgp40_sraw_voc;
+    uint16_t co2_eq_ppm, tvoc_ppb, co2_eq_ppm_wo, tvoc_ppb_wo;
+    uint16_t sgp40_sraw_voc, sgp40_sraw_voc_wo;
+    uint16_t sgp41_sraw_voc, sgp41_sraw_nox, sgp41_sraw_voc_wo, sgp41_sraw_nox_wo;
 
     while (true) {
         std::string timestamp = get_current_time();
 
-        // Measure from SGP30
-        tca9548a.set_channel(2);
-        if (sgp30.measure()) {
-            std::cerr << "Error reading SGP30 measurements" << std::endl;
-        }
-
-        // Measure from SGP40
-        tca9548a.set_channel(0);
-        if (sgp40_measure_raw_signal(default_rh, default_t, &sgp40_sraw_voc) != 0) {
-            std::cerr << "Error measuring SGP40 raw signal" << std::endl;
-        }
-        int32_t sgp40_voc_index;
-        GasIndexAlgorithm_process(&sgp40_voc_params, sgp40_sraw_voc, &sgp40_voc_index);
-
-        // Measure from SGP41
-        tca9548a.set_channel(1);
-        if (sgp41_measure_raw_signals(default_rh, default_t, &sraw_voc, &sraw_nox) != 0) {
-            std::cerr << "Error measuring SGP41 raw signals" << std::endl;
-        }
-        int32_t sgp41_voc_index;
-        GasIndexAlgorithm_process(&sgp41_voc_params, sraw_voc, &sgp41_voc_index);
-
-        // Measure from SHT35
+        // Measure temperature and humidity from SHT35
         tca9548a.set_channel(3);
         if (sht3x_measure_single_shot(REPEATABILITY_MEDIUM, false, &temperature, &humidity) != NO_ERROR) {
             std::cerr << "Error measuring SHT35" << std::endl;
         }
 
+        // Measure from SGP30 with compensation
+        tca9548a.set_channel(2);
+        sgp30.set_relative_humidity(temperature, humidity);
+        if (sgp30.measure()) {
+            std::cerr << "Error reading SGP30 measurements" << std::endl;
+        }
+        co2_eq_ppm = sgp30.getCO2();
+        tvoc_ppb = sgp30.getTVOC();
+
+        // Measure from SGP30 without compensation
+        if (sgp30.measure()) {
+            std::cerr << "Error reading SGP30 measurements without compensation" << std::endl;
+        }
+        co2_eq_ppm_wo = sgp30.getCO2();
+        tvoc_ppb_wo = sgp30.getTVOC();
+
+        // Measure from SGP40 with compensation
+        tca9548a.set_channel(0);
+        if (sgp40_measure_raw_signal(humidity, temperature, &sgp40_sraw_voc) != 0) {
+            std::cerr << "Error measuring SGP40 raw signal with compensation" << std::endl;
+        }
+        int32_t sgp40_voc_index;
+        GasIndexAlgorithm_process(&sgp40_voc_params, sgp40_sraw_voc, &sgp40_voc_index);
+
+        // Measure from SGP40 without compensation
+        if (sgp40_measure_raw_signal(default_rh, default_t, &sgp40_sraw_voc_wo) != 0) {
+            std::cerr << "Error measuring SGP40 raw signal without compensation" << std::endl;
+        }
+
+        // Measure from SGP41 with compensation
+        tca9548a.set_channel(1);
+        if (sgp41_measure_raw_signals(humidity, temperature, &sgp41_sraw_voc, &sgp41_sraw_nox) != 0) {
+            std::cerr << "Error measuring SGP41 raw signals with compensation" << std::endl;
+        }
+        int32_t sgp41_voc_index;
+        GasIndexAlgorithm_process(&sgp41_voc_params, sgp41_sraw_voc, &sgp41_voc_index);
+
+        // Measure from SGP41 without compensation
+        if (sgp41_measure_raw_signals(default_rh, default_t, &sgp41_sraw_voc_wo, &sgp41_sraw_nox_wo) != 0) {
+            std::cerr << "Error measuring SGP41 raw signals without compensation" << std::endl;
+        }
+
         // Measure from FS3000
         tca9548a.set_channel(7);
         float fs3000_velocity = fs3000.FS3000_ReadData();
-        //std::cout << "FS3000 Air Velocity: " << fs3000_velocity << " m/s" << std::endl;
 
         // Write data to CSV file
         data_file << timestamp << ","
-                  << sgp30.getTVOC() << "," << sgp30.getCO2() << "," << sgp30.getH2_raw() << "," << sgp30.getEthanol_raw() << "," << sgp30.getH2() << "," << sgp30.getEthanol() << ","
-                  << sgp40_sraw_voc << "," << sraw_voc << "," << sraw_nox << ","
+                  << tvoc_ppb << "," << co2_eq_ppm << "," << sgp30.getH2_raw() << "," << sgp30.getEthanol_raw() << "," << sgp30.getH2() << "," << sgp30.getEthanol() << ","
+                  << sgp40_sraw_voc << "," << sgp41_sraw_voc << "," << sgp41_sraw_nox << ","
                   << sgp40_voc_index << "," << sgp41_voc_index << ","
                   << temperature << "," << humidity << ","
-                  << fs3000_velocity
+                  << fs3000_velocity << ","
+                  << tvoc_ppb_wo << "," << co2_eq_ppm_wo << "," << sgp30.getH2_raw() << "," << sgp30.getEthanol_raw() << ","
+                  << sgp40_sraw_voc_wo << "," << sgp41_sraw_voc_wo << "," << sgp41_sraw_nox_wo
                   << std::endl;
 
         // Add a delay between measurements
