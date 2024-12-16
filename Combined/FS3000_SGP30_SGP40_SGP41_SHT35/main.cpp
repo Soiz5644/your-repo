@@ -215,21 +215,32 @@ int main() {
             std::cerr << "Error measuring SHT35" << std::endl;
         }
 
-        // Measure from SGP30 with compensation
-        tca9548a.set_channel(2);
-        sgp30.set_relative_humidity(temperature, humidity);
-        if (sgp30.measure()) {
-            std::cerr << "Error reading SGP30 measurements" << std::endl;
-        }
-        co2_eq_ppm = sgp30.getCO2();
-        tvoc_ppb = sgp30.getTVOC();
+		// Measure from SGP30 with compensation
+		tca9548a.set_channel(2);
+		sgp30.set_relative_humidity(temperature, humidity);
+		if (sgp30.measure()) {
+			std::cerr << "Error reading SGP30 measurements" << std::endl;
+		} else {
+			std::cout << "SGP30 CO2eq: " << sgp30.getCO2() << ", TVOC: " << sgp30.getTVOC() << std::endl;
+		}
+		co2_eq_ppm = sgp30.getCO2();
+		tvoc_ppb = sgp30.getTVOC();
 
-        // Measure from SGP30 without compensation
-        if (sgp30.measure()) {
-            std::cerr << "Error reading SGP30 measurements without compensation" << std::endl;
-        }
-        co2_eq_ppm_wo = sgp30.getCO2();
-        tvoc_ppb_wo = sgp30.getTVOC();
+		// Measure from SGP30 without compensation
+		if (sgp30.measure()) {
+			std::cerr << "Error reading SGP30 measurements without compensation" << std::endl;
+		} else {
+			std::cout << "SGP30 CO2eq (WO): " << sgp30.getCO2() << ", TVOC (WO): " << sgp30.getTVOC() << std::endl;
+		}
+		co2_eq_ppm_wo = sgp30.getCO2();
+		tvoc_ppb_wo = sgp30.getTVOC();
+
+		// Debugging raw H2 and Ethanol values
+		if (sgp30.readRaw()) {
+			std::cerr << "Error reading SGP30 raw measurements" << std::endl;
+		} else {
+			std::cout << "SGP30 Raw H2: " << sgp30.getH2_raw() << ", Raw Ethanol: " << sgp30.getEthanol_raw() << std::endl;
+		}
 
         // Measure from SGP40 with compensation
         tca9548a.set_channel(0);
