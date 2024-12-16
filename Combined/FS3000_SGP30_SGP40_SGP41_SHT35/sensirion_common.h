@@ -33,6 +33,7 @@
 #define SENSIRION_COMMON_H
 
 #include "sensirion_config.h"
+#include <stdint.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -173,6 +174,8 @@ void sensirion_common_float_to_bytes(const float value, uint8_t* bytes);
  */
 void sensirion_common_copy_bytes(const uint8_t* source, uint8_t* destination,
                                  uint16_t data_length);
+
+uint8_t generate_crc(const uint8_t* data, uint16_t count);
 
 #ifdef __cplusplus
 }
