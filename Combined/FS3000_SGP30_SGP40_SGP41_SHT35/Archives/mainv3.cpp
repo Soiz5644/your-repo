@@ -196,7 +196,7 @@ int main() {
     
     // Write header if file is created new
     if (!file_exists_flag) {
-        data_file << "Timestamp,SGP30_tVOC_ppb,SGP30_CO2eq_ppm,SGP30_H2_raw,SGP30_Ethanol_raw,SGP30_H2,SGP30_Ethanol,SGP40_SRAW_VOC,SGP41_SRAW_VOC,SGP41_SRAW_NOX,sgp40_voc_index,sgp41_voc_index,sgp40_voc_index_wo,sgp41_voc_index_wo,Temperature,Humidity,FS3000_Velocity,SGP30_tVOC_ppb_wo,SGP30_CO2eq_ppm_wo,SGP30_H2_raw,SGP30_Ethanol_raw,SGP40_SRAW_VOC_wo,SGP41_SRAW_VOC_wo,SGP41_SRAW_NOX_wo" << std::endl;
+        data_file << "Timestamp,SGP30_tVOC_ppb,SGP30_CO2eq_ppm,SGP30_H2_raw,SGP30_Ethanol_raw,SGP30_H2,SGP30_Ethanol,SGP40_SRAW_VOC,SGP41_SRAW_VOC,SGP41_SRAW_NOX,sgp40_voc_index,sgp41_voc_index,Temperature,Humidity,FS3000_Air_Velocity,SGP30_tVOC_ppb_wo,SGP30_CO2eq_ppm_wo,SGP30_H2_raw_wo,SGP30_Ethanol_raw_wo,SGP40_SRAW_VOC_wo,SGP41_SRAW_VOC_wo,SGP41_SRAW_NOX_wo" << std::endl;
     }
 
     // Measure temperature and humidity from SHT35, and raw signals from SGP30, SGP40, SGP41, and FS3000 in an infinite loop
@@ -215,32 +215,32 @@ int main() {
             std::cerr << "Error measuring SHT35" << std::endl;
         }
 
-        // Measure from SGP30 with compensation
-        tca9548a.set_channel(2);
-        sgp30.set_relative_humidity(temperature, humidity);
-        if (sgp30.measure()) {
-            std::cerr << "Error reading SGP30 measurements" << std::endl;
-        } else {
-            std::cout << "SGP30 CO2eq: " << sgp30.getCO2() << ", TVOC: " << sgp30.getTVOC() << std::endl;
-        }
-        co2_eq_ppm = sgp30.getCO2();
-        tvoc_ppb = sgp30.getTVOC();
+		// Measure from SGP30 with compensation
+		tca9548a.set_channel(2);
+		sgp30.set_relative_humidity(temperature, humidity);
+		if (sgp30.measure()) {
+			std::cerr << "Error reading SGP30 measurements" << std::endl;
+		} else {
+			std::cout << "SGP30 CO2eq: " << sgp30.getCO2() << ", TVOC: " << sgp30.getTVOC() << std::endl;
+		}
+		co2_eq_ppm = sgp30.getCO2();
+		tvoc_ppb = sgp30.getTVOC();
 
-        // Measure from SGP30 without compensation
-        if (sgp30.measure()) {
-            std::cerr << "Error reading SGP30 measurements without compensation" << std::endl;
-        } else {
-            std::cout << "SGP30 CO2eq (WO): " << sgp30.getCO2() << ", TVOC (WO): " << sgp30.getTVOC() << std::endl;
-        }
-        co2_eq_ppm_wo = sgp30.getCO2();
-        tvoc_ppb_wo = sgp30.getTVOC();
+		// Measure from SGP30 without compensation
+		if (sgp30.measure()) {
+			std::cerr << "Error reading SGP30 measurements without compensation" << std::endl;
+		} else {
+			std::cout << "SGP30 CO2eq (WO): " << sgp30.getCO2() << ", TVOC (WO): " << sgp30.getTVOC() << std::endl;
+		}
+		co2_eq_ppm_wo = sgp30.getCO2();
+		tvoc_ppb_wo = sgp30.getTVOC();
 
-        // Debugging raw H2 and Ethanol values
-        if (sgp30.readRaw()) {
-            std::cerr << "Error reading SGP30 raw measurements" << std::endl;
-        } else {
-            std::cout << "SGP30 Raw H2: " << sgp30.getH2_raw() << ", Raw Ethanol: " << sgp30.getEthanol_raw() << std::endl;
-        }
+		// Debugging raw H2 and Ethanol values
+		if (sgp30.readRaw()) {
+			std::cerr << "Error reading SGP30 raw measurements" << std::endl;
+		} else {
+			std::cout << "SGP30 Raw H2: " << sgp30.getH2_raw() << ", Raw Ethanol: " << sgp30.getEthanol_raw() << std::endl;
+		}
 
         // Measure from SGP40 with compensation
         tca9548a.set_channel(0);
@@ -254,8 +254,6 @@ int main() {
         if (sgp40_measure_raw_signal(default_rh, default_t, &sgp40_sraw_voc_wo) != 0) {
             std::cerr << "Error measuring SGP40 raw signal without compensation" << std::endl;
         }
-        int32_t sgp40_voc_index_wo;
-        GasIndexAlgorithm_process(&sgp40_voc_params, sgp40_sraw_voc_wo, &sgp40_voc_index_wo);
 
         // Measure from SGP41 with compensation
         tca9548a.set_channel(1);
@@ -269,8 +267,6 @@ int main() {
         if (sgp41_measure_raw_signals(default_rh, default_t, &sgp41_sraw_voc_wo, &sgp41_sraw_nox_wo) != 0) {
             std::cerr << "Error measuring SGP41 raw signals without compensation" << std::endl;
         }
-        int32_t sgp41_voc_index_wo;
-        GasIndexAlgorithm_process(&sgp41_voc_params, sgp41_sraw_voc_wo, &sgp41_voc_index_wo);
 
         // Measure from FS3000
         tca9548a.set_channel(7);
@@ -281,11 +277,9 @@ int main() {
                   << tvoc_ppb << "," << co2_eq_ppm << "," << sgp30.getH2_raw() << "," << sgp30.getEthanol_raw() << "," << sgp30.getH2() << "," << sgp30.getEthanol() << ","
                   << sgp40_sraw_voc << "," << sgp41_sraw_voc << "," << sgp41_sraw_nox << ","
                   << sgp40_voc_index << "," << sgp41_voc_index << ","
-                  << sgp40_voc_index_wo << "," << sgp41_voc_index_wo << ","
                   << temperature << "," << humidity << ","
                   << fs3000_velocity << ","
-                  << tvoc_ppb_wo << "," << co2_eq_ppm_wo << ","
-                  << sgp30.getH2_raw() << "," << sgp30.getEthanol_raw() << ","
+                  << tvoc_ppb_wo << "," << co2_eq_ppm_wo << "," << sgp30.getH2_raw() << "," << sgp30.getEthanol_raw() << ","
                   << sgp40_sraw_voc_wo << "," << sgp41_sraw_voc_wo << "," << sgp41_sraw_nox_wo
                   << std::endl;
 
