@@ -204,7 +204,7 @@ int16_t sht4x_measure_high_precision_ticks(uint16_t* temperature_ticks,
     uint8_t* buffer_ptr = communication_buffer;
     uint16_t local_offset = 0;
     local_offset =
-        sensirion_i2c_add_command8_to_buffer(buffer_ptr, local_offset, 0xfd);
+        sensirion_i2c_add_command_to_buffer(buffer_ptr, local_offset, 0xfd);
     local_error =
         sensirion_i2c_write_data(_i2c_address, buffer_ptr, local_offset);
     if (local_error != NO_ERROR) {
@@ -226,7 +226,7 @@ int16_t sht4x_measure_medium_precision_ticks(uint16_t* temperature_ticks,
     uint8_t* buffer_ptr = communication_buffer;
     uint16_t local_offset = 0;
     local_offset =
-        sensirion_i2c_add_command8_to_buffer(buffer_ptr, local_offset, 0xf6);
+        sensirion_i2c_add_command_to_buffer(buffer_ptr, local_offset, 0xf6);
     local_error =
         sensirion_i2c_write_data(_i2c_address, buffer_ptr, local_offset);
     if (local_error != NO_ERROR) {
@@ -248,7 +248,7 @@ int16_t sht4x_measure_lowest_precision_ticks(uint16_t* temperature_ticks,
     uint8_t* buffer_ptr = communication_buffer;
     uint16_t local_offset = 0;
     local_offset =
-        sensirion_i2c_add_command8_to_buffer(buffer_ptr, local_offset, 0xe0);
+        sensirion_i2c_add_command_to_buffer(buffer_ptr, local_offset, 0xe0);
     local_error =
         sensirion_i2c_write_data(_i2c_address, buffer_ptr, local_offset);
     if (local_error != NO_ERROR) {
@@ -271,7 +271,7 @@ sht4x_activate_highest_heater_power_long_ticks(uint16_t* temperature_ticks,
     uint8_t* buffer_ptr = communication_buffer;
     uint16_t local_offset = 0;
     local_offset =
-        sensirion_i2c_add_command8_to_buffer(buffer_ptr, local_offset, 0x39);
+        sensirion_i2c_add_command_to_buffer(buffer_ptr, local_offset, 0x39);
     local_error =
         sensirion_i2c_write_data(_i2c_address, buffer_ptr, local_offset);
     if (local_error != NO_ERROR) {
@@ -294,7 +294,7 @@ sht4x_activate_highest_heater_power_short_ticks(uint16_t* temperature_ticks,
     uint8_t* buffer_ptr = communication_buffer;
     uint16_t local_offset = 0;
     local_offset =
-        sensirion_i2c_add_command8_to_buffer(buffer_ptr, local_offset, 0x32);
+        sensirion_i2c_add_command_to_buffer(buffer_ptr, local_offset, 0x32);
     local_error =
         sensirion_i2c_write_data(_i2c_address, buffer_ptr, local_offset);
     if (local_error != NO_ERROR) {
@@ -317,7 +317,7 @@ sht4x_activate_medium_heater_power_long_ticks(uint16_t* temperature_ticks,
     uint8_t* buffer_ptr = communication_buffer;
     uint16_t local_offset = 0;
     local_offset =
-        sensirion_i2c_add_command8_to_buffer(buffer_ptr, local_offset, 0x2f);
+        sensirion_i2c_add_command_to_buffer(buffer_ptr, local_offset, 0x2f);
     local_error =
         sensirion_i2c_write_data(_i2c_address, buffer_ptr, local_offset);
     if (local_error != NO_ERROR) {
@@ -340,7 +340,7 @@ sht4x_activate_medium_heater_power_short_ticks(uint16_t* temperature_ticks,
     uint8_t* buffer_ptr = communication_buffer;
     uint16_t local_offset = 0;
     local_offset =
-        sensirion_i2c_add_command8_to_buffer(buffer_ptr, local_offset, 0x24);
+        sensirion_i2c_add_command_to_buffer(buffer_ptr, local_offset, 0x24);
     local_error =
         sensirion_i2c_write_data(_i2c_address, buffer_ptr, local_offset);
     if (local_error != NO_ERROR) {
@@ -363,7 +363,7 @@ sht4x_activate_lowest_heater_power_long_ticks(uint16_t* temperature_ticks,
     uint8_t* buffer_ptr = communication_buffer;
     uint16_t local_offset = 0;
     local_offset =
-        sensirion_i2c_add_command8_to_buffer(buffer_ptr, local_offset, 0x1e);
+        sensirion_i2c_add_command_to_buffer(buffer_ptr, local_offset, 0x1e);
     local_error =
         sensirion_i2c_write_data(_i2c_address, buffer_ptr, local_offset);
     if (local_error != NO_ERROR) {
@@ -386,7 +386,7 @@ sht4x_activate_lowest_heater_power_short_ticks(uint16_t* temperature_ticks,
     uint8_t* buffer_ptr = communication_buffer;
     uint16_t local_offset = 0;
     local_offset =
-        sensirion_i2c_add_command8_to_buffer(buffer_ptr, local_offset, 0x15);
+        sensirion_i2c_add_command_to_buffer(buffer_ptr, local_offset, 0x15);
     local_error =
         sensirion_i2c_write_data(_i2c_address, buffer_ptr, local_offset);
     if (local_error != NO_ERROR) {
@@ -407,7 +407,7 @@ int16_t sht4x_serial_number(uint32_t* serial_number) {
     uint8_t* buffer_ptr = communication_buffer;
     uint16_t local_offset = 0;
     local_offset =
-        sensirion_i2c_add_command8_to_buffer(buffer_ptr, local_offset, 0x89);
+        sensirion_i2c_add_command_to_buffer(buffer_ptr, local_offset, 0x89);
     local_error =
         sensirion_i2c_write_data(_i2c_address, buffer_ptr, local_offset);
     if (local_error != NO_ERROR) {
@@ -427,7 +427,7 @@ int16_t sht4x_soft_reset() {
     uint8_t* buffer_ptr = communication_buffer;
     uint16_t local_offset = 0;
     local_offset =
-        sensirion_i2c_add_command8_to_buffer(buffer_ptr, local_offset, 0x94);
+        sensirion_i2c_add_command_to_buffer(buffer_ptr, local_offset, 0x94);
     local_error =
         sensirion_i2c_write_data(_i2c_address, buffer_ptr, local_offset);
     if (local_error != NO_ERROR) {
