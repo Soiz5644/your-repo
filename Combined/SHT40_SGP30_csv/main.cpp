@@ -27,10 +27,26 @@ bool file_exists(const std::string& filename) {
     return (stat(filename.c_str(), &buffer) == 0);
 }
 
+void scan_i2c_bus() {
+    std::cout << "Scanning I2C bus..." << std::endl;
+    for (int addr = 0; addr <= 0x7F; ++addr) {
+        int fd = wiringPiI2CSetup(addr);
+        if (fd != -1) {
+            if (wiringPiI2CRead(fd) != -1) {
+                std::cout << "I2C device found at address 0x" << std::hex << addr << std::dec << std::endl;
+            }
+            close(fd);
+        }
+    }
+}
+
 int main() {
     // Initialize I2C HAL
     std::cout << "Initializing I2C HAL..." << std::endl;
     sensirion_i2c_hal_init();
+
+    // Scan I2C bus for devices
+    scan_i2c_bus();
 
     // Initialize SGP30
     std::cout << "Initializing SGP30..." << std::endl;
@@ -43,6 +59,20 @@ int main() {
     // Initialize SHT40
     std::cout << "Initializing SHT40..." << std::endl;
     sht4x_init(SHT40_I2C_ADDR_44);
+
+    // Perform Soft Reset on SHT40
+    std::cout << "Performing soft reset on SHT40..." << std::endl;
+    sht4x_soft_reset();
+    sensirion_i2c_hal_sleep_usec(10000);  // Wait for 10ms
+
+    // Verify SHT40 communication
+    uint32_t serial_number = 0;
+    int16_t serial_error = sht4x_serial_number(&serial_number);
+    if (serial_error != NO_ERROR) {
+        std::cerr << "Failed to read SHT40 serial number, error code: " << serial_error << std::endl;
+        return -1;
+    }
+    std::cout << "SHT40 Serial Number: " << serial_number << std::endl;
 
     // Open CSV file for appending data
     std::ofstream data_file;
@@ -62,8 +92,11 @@ int main() {
         std::string timestamp = get_current_time();
 
         // Measure temperature and humidity from SHT40
-        if (sht4x_measure_high_precision(&temperature, &humidity) != NO_ERROR) {
-            std::cerr << "Error measuring SHT40" << std::endl;
+        int16_t measure_error = sht4x_measure_high_precision(&temperature, &humidity);
+        if (measure_error != NO_ERROR) {
+            std::cerr << "Error measuring SHT40, error code: " << measure_error << std::endl;
+        } else {
+            std::cout << "Measured SHT40 Temperature: " << temperature << ", Humidity: " << humidity << std::endl;
         }
 
         // Measure from SGP30 with compensation
