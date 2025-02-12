@@ -11,6 +11,9 @@
 #include <cstring>
 #include <wiringPi.h>
 #include <wiringPiI2C.h>
+#include <linux/i2c-dev.h>
+#include <fcntl.h>
+#include <sys/ioctl.h>
 
 #define NO_ERROR 0  // Define NO_ERROR as 0
 
@@ -27,7 +30,38 @@ bool file_exists(const std::string& filename) {
     return (stat(filename.c_str(), &buffer) == 0);
 }
 
+void scan_i2c_bus() {
+    int file;
+    char filename[20];
+    const int addr = 0x44; // I2C address for SHT40
+
+    snprintf(filename, 19, "/dev/i2c-1");
+    file = open(filename, O_RDWR);
+    if (file < 0) {
+        std::cerr << "Failed to open the i2c bus" << std::endl;
+        return;
+    }
+
+    if (ioctl(file, I2C_SLAVE, addr) < 0) {
+        std::cerr << "Failed to acquire bus access and/or talk to slave" << std::endl;
+        close(file);
+        return;
+    }
+
+    std::cout << "I2C bus scan, checking address: " << std::hex << addr << std::endl;
+    if (ioctl(file, I2C_SLAVE, addr) >= 0) {
+        std::cout << "Device found at address 0x" << std::hex << addr << std::endl;
+    } else {
+        std::cerr << "No device found at address 0x" << std::hex << addr << std::endl;
+    }
+
+    close(file);
+}
+
 int main() {
+    // Scan I2C bus
+    scan_i2c_bus();
+
     // Initialize I2C HAL
     std::cout << "Initializing I2C HAL..." << std::endl;
     sensirion_i2c_hal_init();
@@ -44,10 +78,23 @@ int main() {
     std::cout << "Initializing SHT40..." << std::endl;
     sht4x_init(SHT40_I2C_ADDR_44);
 
+    // Perform soft reset on SHT40
+    sht4x_soft_reset();
+    sensirion_i2c_hal_sleep_usec(10000);
+
+    // Retrieve and print the serial number
+    uint32_t serial_number = 0;
+    int16_t error = sht4x_serial_number(&serial_number);
+    if (error != NO_ERROR) {
+        std::cerr << "Error executing serial_number(): " << error << std::endl;
+        return error;
+    }
+    std::cout << "SHT40 serial number: " << serial_number << std::endl;
+
     // Open CSV file for appending data
     std::ofstream data_file;
-    bool file_exists_flag = file_exists("sensor_data.csv");
-    data_file.open("sensor_data.csv", std::ios::out | std::ios::app);
+    bool file_exists_flag = file_exists("SGP30_output.csv");
+    data_file.open("SGP30_output.csv", std::ios::out | std::ios::app);
     
     // Write header if file is created new
     if (!file_exists_flag) {
@@ -62,8 +109,9 @@ int main() {
         std::string timestamp = get_current_time();
 
         // Measure temperature and humidity from SHT40
-        if (sht4x_measure_high_precision(&temperature, &humidity) != NO_ERROR) {
-            std::cerr << "Error measuring SHT40" << std::endl;
+        error = sht4x_measure_high_precision(&temperature, &humidity);
+        if (error != NO_ERROR) {
+            std::cerr << "Error measuring SHT40: " << error << std::endl;
         }
 
         // Measure from SGP30 with compensation

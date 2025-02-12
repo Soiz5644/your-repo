@@ -191,8 +191,8 @@ int main() {
 
     // Open CSV file for appending data
     std::ofstream data_file;
-    bool file_exists_flag = file_exists("sensor_data.csv");
-    data_file.open("sensor_data.csv", std::ios::out | std::ios::app);
+    bool file_exists_flag = file_exists("data_input.csv");
+    data_file.open("data_input.csv", std::ios::out | std::ios::app);
     
     // Write header if file is created new
     if (!file_exists_flag) {
