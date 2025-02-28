@@ -1,0 +1,13 @@
+{
+  "urls": [
+    [
+      "micropython_stts22h/examples/stts22h_simpletest.py",
+      "github:jposada202020/MicroPython_STTS22H/examples/stts22h_simpletest.py"
+    ],
+    [
+      "micropython_stts22h/examples/stts22h_output_data_rate.py",
+      "github:jposada202020/MicroPython_STTS22H/examples/stts22h_output_data_rate.py"
+    ]
+  ],
+  "version": "1"
+}

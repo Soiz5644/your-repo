@@ -1,0 +1,17 @@
+{
+  "urls": [
+    [
+      "micropython_stts22h/stts22h.py",
+      "github:jposada202020/MicroPython_STTS22H/micropython_stts22h/stts22h.py"
+    ],
+    [
+      "micropython_stts22h/i2c_helpers.py",
+      "github:jposada202020/MicroPython_STTS22H/micropython_stts22h/i2c_helpers.py"
+    ],
+    [
+      "micropython_stts22h/__init__.py",
+      "github:jposada202020/MicroPython_STTS22H/micropython_stts22h/__init__.py"
+    ]
+  ],
+  "version": "1"
+}

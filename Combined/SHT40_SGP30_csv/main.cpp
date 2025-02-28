@@ -10,6 +10,7 @@
 #include <unistd.h>
 #include <wiringPi.h>
 #include <wiringPiI2C.h>
+#include <sstream>
 
 #define NO_ERROR 0  // Define NO_ERROR as 0
 
@@ -28,19 +29,19 @@ bool file_exists(const std::string& filename) {
 
 int main() {
     // Initialize I2C HAL
-    std::cout << "Initializing I2C HAL..." << std::endl;
+//    std::cout << "Initializing I2C HAL..." << std::endl;
     sensirion_i2c_hal_init();
 
     // Initialize SGP30
-    std::cout << "Initializing SGP30..." << std::endl;
+//    std::cout << "Initializing SGP30..." << std::endl;
     SGP30 sgp30;
     if (sgp30.init() != 0) {
-        std::cerr << "Failed to initialize SGP30" << std::endl;
+//        std::cerr << "Failed to initialize SGP30" << std::endl;
         return -1;
     }
 
     // Initialize SHT40
-std::cout << "Initializing SHT40..." << std::endl;
+//std::cout << "Initializing SHT40..." << std::endl;
     sht4x_init(SHT40_I2C_ADDR_44);
 
     // Open CSV file for appending data
@@ -63,33 +64,37 @@ std::cout << "Initializing SHT40..." << std::endl;
 
         // Measure temperature and humidity from SHT40
         if (sht4x_measure_high_precision(&temperature, &humidity) != NO_ERROR) {
-            std::cerr << "Error measuring SHT40" << std::endl;
+//            std::cerr << "Error measuring SHT40" << std::endl;
         }
 
         // Measure from SGP30 with compensation
         sgp30.set_relative_humidity(temperature, humidity);
         if (sgp30.measure()) {
-            std::cerr << "Error reading SGP30 measurements" << std::endl;
+//           std::cerr << "Error reading SGP30 measurements" << std::endl;
         } else {
-            std::cout << "SGP30 CO2eq: " << sgp30.getCO2() << ", TVOC: " << sgp30.getTVOC() << std::endl;
+//            std::cout << "SGP30 CO2eq: " << sgp30.getCO2() << ", TVOC: " << sgp30.getTVOC() << std::endl;
         }
         co2_eq_ppm = sgp30.getCO2();
         tvoc_ppb = sgp30.getTVOC();
 
         // Debugging raw H2 and Ethanol values
         if (sgp30.readRaw()) {
-            std::cerr << "Error reading SGP30 raw measurements" << std::endl;
+//            std::cerr << "Error reading SGP30 raw measurements" << std::endl;
         } else {
-            std::cout << "SGP30 Raw H2: " << sgp30.getH2_raw() << ", Raw Ethanol: " << sgp30.getEthanol_raw() << std::endl;
+//            std::cout << "SGP30 Raw H2: " << sgp30.getH2_raw() << ", Raw Ethanol: " << sgp30.getEthanol_raw() << std::endl;
         }
 
-        // Write data to CSV file
-        data_file << timestamp << ","
-                  << tvoc_ppb << "," << co2_eq_ppm << ","
-                  << sgp30.getH2_raw() << "," << sgp30.getEthanol_raw() << ","
-                  << temperature << "," << humidity
-                  << std::endl;
+		// Write data to CSV file and standard output
+        std::ostringstream data_stream;
+        data_stream << timestamp << ","
+                    << tvoc_ppb << "," << co2_eq_ppm << ","
+                    << sgp30.getH2_raw() << "," << sgp30.getEthanol_raw() << ","
+                    << temperature << "," << humidity;
+        std::string data = data_stream.str();
 
+        data_file << data << std::endl;
+        std::cout << data << std::endl;
+		
         // Add a delay between measurements
         std::this_thread::sleep_for(std::chrono::seconds(1));
     }
