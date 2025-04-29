@@ -102,7 +102,7 @@ int main() {
 
         index++;
 
-        sleep(1); // Attendre 1 seconde avant nouvelle lecture
+        sleep(120); // Attendre 2 min avant nouvelle lecture
     }
 
     file.close();
