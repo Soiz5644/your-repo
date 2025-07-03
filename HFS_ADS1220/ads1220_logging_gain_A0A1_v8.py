@@ -9,10 +9,10 @@ from datetime import datetime
 CS_PIN = 8  # Chip Select (GPIO8/CE0)
 DRDY_PIN = 17  # Data Ready (GPIO17)
 
-# Configuration SPI
+# Configuration SPI - optimisée pour robustesse avec l'ADS1220
 SPI_BUS = 0
 SPI_DEVICE = 0
-SPI_SPEED_HZ = 100000  # 100 kHz
+SPI_SPEED_HZ = 100000  # 100 kHz - vitesse basse pour robustesse
 
 # Commandes du ADS1220
 CMD_RESET = 0x06
@@ -62,23 +62,38 @@ def wait_drdy():
         if cpt % 1000 == 0:
             print(f"[DEBUG] Toujours en attente de DRDY ({cpt} ms)")
 
+def spi_cs_low():
+    """Active le CS (passe à LOW) pour sélectionner l'ADS1220"""
+    GPIO.output(CS_PIN, GPIO.LOW)
+    time.sleep(0.001)  # Petit délai pour stabilisation
+
+def spi_cs_high():
+    """Désactive le CS (passe à HIGH) pour désélectionner l'ADS1220"""
+    time.sleep(0.001)  # Petit délai avant de relâcher CS
+    GPIO.output(CS_PIN, GPIO.HIGH)
+
+def spi_xfer_with_cs(spi, data):
+    """Effectue un transfert SPI avec gestion manuelle du CS"""
+    spi_cs_low()
+    try:
+        result = spi.xfer2(data)
+        return result
+    finally:
+        spi_cs_high()
+
 def ads1220_write_reg(spi, reg, value):
     cmd = [CMD_WREG | (reg << 2), 0x00, value]
     print(f"[SPI DEBUG] Write reg {reg}: {cmd}")
-    spi.xfer2(cmd)
-
-# def ads1220_read_reg(spi, reg):
-    # resp = spi.xfer2([CMD_RREG | (reg << 2), 0x00, 0x00])
-    # return resp[2]
+    spi_xfer_with_cs(spi, cmd)
 
 def ads1220_read_reg(spi, reg):
     cmd = [CMD_RREG | (reg << 2), 0x00, 0x00]
     print(f"[SPI DEBUG] Read reg {reg}: {cmd}")
-    resp = spi.xfer2(cmd)
+    resp = spi_xfer_with_cs(spi, cmd)
     return resp[2]
 
 def ads1220_read_data(spi):
-    resp = spi.xfer2([CMD_RDATA, 0x00, 0x00, 0x00])
+    resp = spi_xfer_with_cs(spi, [CMD_RDATA, 0x00, 0x00, 0x00])
     raw = (resp[1] << 16) | (resp[2] << 8) | resp[3]
     if raw & 0x800000:
         raw -= 1 << 24
@@ -86,16 +101,18 @@ def ads1220_read_data(spi):
 
 def ads1220_init(spi, gain):
     # Reset du convertisseur
-    spi.xfer2([CMD_RESET])
-    time.sleep(1)
+    print("[DEBUG] Envoi de la commande RESET...")
+    spi_xfer_with_cs(spi, [CMD_RESET])
+    time.sleep(1)  # Délai robuste après reset
     
-    # Lecture des 4 registres de configuration après RESET
+    # Lecture lisible de la séquence des registres (REG0 à REG3) après RESET
+    print("\n[DEBUG] === LECTURE DES REGISTRES APRÈS RESET ===")
     for reg in range(4):
-        resp = spi.xfer2([0x20 | (reg << 2), 0x00, 0x00])
-        print(f"REG{reg} après RESET : 0x{resp[2]:02X}")
-    
-    # val0 = ads1220_read_reg(spi, REG_CONF0)
-    # print(f"REG0 après RESET : 0x{val0:02X}")
+        cmd = [CMD_RREG | (reg << 2), 0x00, 0x00]
+        resp = spi_xfer_with_cs(spi, cmd)
+        reg_value = resp[2]
+        print(f"[DEBUG] REG{reg} après RESET : 0x{reg_value:02X} (binaire: {reg_value:08b})")
+    print("[DEBUG] ===============================================\n")
     
     # MUX[3:0]=0000 (A0-A1), PGA enabled, gain selon l'utilisateur
     mux_bits = 0b0000 << 4
@@ -120,10 +137,15 @@ def ads1220_init(spi, gain):
     reg2 = 0b00010000  # Internal VREF, 50/60Hz rejection
     reg3 = 0x00        # Désactive IDACs
 
+    print("[DEBUG] Écriture des registres de configuration...")
     ads1220_write_reg(spi, REG_CONF0, reg0)
+    time.sleep(0.01)  # Délai entre écritures pour robustesse
     ads1220_write_reg(spi, REG_CONF1, reg1)
+    time.sleep(0.01)
     ads1220_write_reg(spi, REG_CONF2, reg2)
+    time.sleep(0.01)
     ads1220_write_reg(spi, REG_CONF3, reg3)
+    time.sleep(0.01)
 
     # Debug registre
     val0 = ads1220_read_reg(spi, REG_CONF0)
@@ -148,6 +170,11 @@ def main():
     print("[DEBUG] Initialisation GPIO")
     GPIO.setmode(GPIO.BCM)
     GPIO.setup(DRDY_PIN, GPIO.IN)
+    
+    # Configuration du CS en sortie pour gestion manuelle
+    print(f"[DEBUG] Configuration CS pin {CS_PIN} en sortie")
+    GPIO.setup(CS_PIN, GPIO.OUT)
+    GPIO.output(CS_PIN, GPIO.HIGH)  # CS inactif au démarrage
 
     gain = ask_gain()
 
@@ -155,13 +182,20 @@ def main():
     spi = spidev.SpiDev()
     spi.open(SPI_BUS, SPI_DEVICE)
     spi.max_speed_hz = SPI_SPEED_HZ
-    spi.mode = 1
+    spi.mode = 1  # Mode SPI 1 (CPOL=0, CPHA=1) pour ADS1220
+    
+    # Désactiver la gestion automatique du CS par spidev
+    print("[DEBUG] Désactivation de la gestion automatique du CS (spi.no_cs = True)")
+    spi.no_cs = True
 
+    print("[DEBUG] Initialisation de l'ADS1220...")
     ads1220_init(spi, gain)
+    print("[DEBUG] Initialisation terminée, début des mesures...\n")
 
     try:
         while True:
-            spi.xfer2([CMD_START])
+            print("[DEBUG] Démarrage d'une conversion...")
+            spi_xfer_with_cs(spi, [CMD_START])
             wait_drdy()
             value_raw = ads1220_read_data(spi)
             value_volts = raw_to_voltage(value_raw)
@@ -171,6 +205,8 @@ def main():
             time.sleep(1)
     finally:
         print("[DEBUG] Fermeture SPI et nettoyage GPIO")
+        # S'assurer que CS est inactif avant de fermer
+        GPIO.output(CS_PIN, GPIO.HIGH)
         spi.close()
         GPIO.cleanup()
 
