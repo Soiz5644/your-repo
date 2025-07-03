@@ -1,0 +1,20 @@
+# Python cache files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Build artifacts
+*.so
+*.o
+*.a
+*.out
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Data files (optional, depending on needs)
+*.csv
+*.log
