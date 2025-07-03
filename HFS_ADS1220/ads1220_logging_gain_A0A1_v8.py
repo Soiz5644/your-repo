@@ -147,9 +147,18 @@ def ads1220_init(spi, gain):
     ads1220_write_reg(spi, REG_CONF3, reg3)
     time.sleep(0.01)
 
-    # Debug registre
+    # Lecture et vérification de tous les registres après configuration
+    print("\n[DEBUG] === VÉRIFICATION DES REGISTRES APRÈS CONFIGURATION ===")
     val0 = ads1220_read_reg(spi, REG_CONF0)
-    print(f"[DEBUG] REG0 après init : {bin(val0)} (0x{val0:02X}), gain={gain}")
+    val1 = ads1220_read_reg(spi, REG_CONF1)
+    val2 = ads1220_read_reg(spi, REG_CONF2)
+    val3 = ads1220_read_reg(spi, REG_CONF3)
+    print(f"[DEBUG] REG0: 0x{val0:02X} (binaire: {val0:08b}) - MUX + GAIN")
+    print(f"[DEBUG] REG1: 0x{val1:02X} (binaire: {val1:08b}) - DATA RATE + MODE")
+    print(f"[DEBUG] REG2: 0x{val2:02X} (binaire: {val2:08b}) - VREF + FILTRES")
+    print(f"[DEBUG] REG3: 0x{val3:02X} (binaire: {val3:08b}) - IDAC CONFIG")
+    print(f"[DEBUG] Configuration: Gain={gain}, MUX=A0-A1, VREF=Interne")
+    print("[DEBUG] ========================================================\n")
 
 def raw_to_voltage(raw):
     v = (raw / float(FSR)) * (VREF)
