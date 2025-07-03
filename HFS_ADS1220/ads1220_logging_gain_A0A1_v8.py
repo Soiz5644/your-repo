@@ -147,9 +147,14 @@ def ads1220_init(spi, gain):
     ads1220_write_reg(spi, REG_CONF3, reg3)
     time.sleep(0.01)
 
-    # Debug registre
-    val0 = ads1220_read_reg(spi, REG_CONF0)
-    print(f"[DEBUG] REG0 après init : {bin(val0)} (0x{val0:02X}), gain={gain}")
+    # Lecture lisible de la séquence des registres (REG0 à REG3) après CONFIGURATION
+    print("\n[DEBUG] === LECTURE DES REGISTRES APRÈS CONFIGURATION ===")
+    for reg in range(4):
+        cmd = [CMD_RREG | (reg << 2), 0x00, 0x00]
+        resp = spi_xfer_with_cs(spi, cmd)
+        reg_value = resp[2]
+        print(f"[DEBUG] REG{reg} après CONFIG : 0x{reg_value:02X} (binaire: {reg_value:08b})")
+    print("[DEBUG] ===============================================\n")
 
 def raw_to_voltage(raw):
     v = (raw / float(FSR)) * (VREF)
