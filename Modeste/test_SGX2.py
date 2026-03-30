@@ -15,7 +15,7 @@ FSR_VOLTS = 4.096
 # Data rate: 128 SPS
 DR_128SPS = 0x0080
 
-SAMPLE_PERIOD_S = 1.0
+SAMPLE_PERIOD_S = 10.0
 
 CSV_PATH = "/home/pi/SGX/moisture_raw.csv"
 
